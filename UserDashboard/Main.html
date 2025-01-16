@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Refilling Dashboard</title>
+    <link rel="stylesheet" href="main.css">
+    
+</head>
+<body>
+    <div class="navbar">
+        <span class="menu" onclick="toggleSidebar()">&#9776;</span>
+        <h1>Water Refilling Dashboard</h1>
+        <span class="profile">&#128100;</span>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <a href="#" onclick="showContent('dashboard')">Dashboard</a>
+        <a href="#" onclick="showContent('profile')">Profile Settings</a>
+        <button class="dark-mode-toggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    </div>
+
+    <div class="content" id="content">
+        <h2>Welcome to your Dashboard</h2>
+        <div class="buttons-container">
+            <button class="button">Home</button>
+            <button class="button">Orders</button>
+            <button class="button">Delivery</button>
+            <button class="button">History</button>
+        </div>
+        <div class="image-container">
+            <!-- <img src="https://via.placeholder.com/150?text=Water+Bottle" alt="Water Bottle"> -->
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
