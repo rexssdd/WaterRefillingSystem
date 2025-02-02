@@ -1,0 +1,565 @@
+/* import google fonts */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+*{
+    margin:0;
+    padding:0;
+    box-sizing: border-box;
+    box-shadow: #000;
+    font-family: "Poppins", sans-serif;
+}
+a{
+    text-decoration: none;
+}
+.header{
+    position:fixed;
+    height: 80px;
+    width: 100%;
+    color: #000;
+    z-index: 100;
+    padding: 0 20px;
+}
+    .nav_logo {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+        margin-left: 100px;
+    } 
+    .nav_logo .img{
+        margin-left: 30px;
+    }
+
+    .logo {
+        width: 40px;  /* Adjust size as needed */
+        height: auto;
+        margin-right: 30px;  /* Space between logo and text */
+    }
+.nav{
+    max-width: 3000px;
+    margin-left: -20px;
+    width: 102.5%;
+    background-color: rgba(0,0,0,1);}
+.nav,
+.nav_item{
+    display: flex;
+    align-items:center;
+    height: 100%;
+    justify-content: space-between;
+}
+.nav_logo,
+.nav_link,
+.button{
+    text-decoration: none;
+    color: white;
+    padding: 10px 15px;
+    transition: 0.3s;
+}
+.nav_link {
+    text-decoration: none;
+    color: white;
+    padding: 10px 15px;
+    transition: 0.3s;
+}
+
+.nav_link.active {
+    background-color: #ffd700;
+    color: black;
+    border-radius: 5px;
+    font-weight: bold;
+}
+/* .nav_item .nav_link{
+    background-color: #ffd700;
+    color: black;
+    border-radius: 5px;
+    font-weight: bold;
+} */
+.nav_logo{
+font-size:30px;
+}
+.nav_item{
+    column-gap: 25px;
+    font-size:16px;
+}
+
+.nav_link:hover{
+    color: #fbff08;
+}
+.button{
+    padding: 6px 24px;
+    border: 2px solid #fff;
+    background: transparent;
+    border-radius: 6px;
+    margin-right: 100px;
+    cursor: pointer;
+    font-size: 16px;
+
+}
+.button:hover{
+    color:rgb(255, 251, 0);
+}
+/* home */
+.home{
+    position: relative;
+    background-color: rgba(0,0,0,0.6);
+    height: 1000px;
+    width: 100%;
+    /* background-image: url(/WaterRefillingSystem/images/bg-3.jpg); */
+    background-size: cover;
+    background-position: center;
+}
+.home::before{
+    content: '';
+    position: absolute;
+    height: 500%;
+    width: 100%;
+    background-color: rgba(0,0,0,0.6);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.5s ease-out;
+}
+.home.show::before{
+ opacity: 1;
+ pointer-events: auto;
+}
+/* form */
+
+.form_container{
+    position: absolute;
+    max-width: 320px;
+    width: 100%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%) scale(1.2);
+    z-index: 101;
+    background:#ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: rgba(0,0,0,0.1);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s ease-out;
+}
+html{
+    scroll-behavior: smooth;
+}
+.home.show .form_container {
+    position:fixed;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%,-50%) scale(1);
+}
+.signup_form {
+    display:none;
+}
+.form_container.active .signup_form{
+    display: block;
+}
+.form_container.active .login_form{
+    display: none;
+}
+.form_close{
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    color:#0b0217;
+    font-size: 22px;
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.form_container h2 {
+    font-size: 22px;
+    color: #0b0217;
+    text-align: center;
+}
+.input_box{
+    position: relative;
+    margin-top: 30px;
+    width: 100%;
+    height: 40px;
+}
+.input_box input{
+    height:100%;
+    width: 100%;
+    border: none;
+    outline: none;
+    padding: 0 30px;
+    color: #333;
+    transition: all 0.2s ease;
+    border-bottom: 1.5px solid #aaaaaa;
+}
+.input_box input:focus{
+    border-color: #0534cff8;
+}
+
+.input_box i{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #707070;
+}
+
+.input_box i.email,
+.input_box i.password,
+.input_box i.contact,
+.input_box i.username{
+    left: 0;
+} 
+.input_box i.contact{
+    height: 1px;
+    background: transparent;
+    position: absolute;
+    margin-left: -20px;
+    margin-top: -20px;
+}
+
+.input_box input:focus ~ i.email,
+.input_box input:focus ~ i.contact,
+.input_box input:focus ~ i.username,
+.input_box input:focus ~ i.pw_hide{
+    color: #0534cff8;
+}
+
+.input_box i.pw_hide{
+    right: 0;
+    font-size: 18px;
+    cursor: pointer;
+}
+.option_field{
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.form_container a{
+    color: #0534cff8;
+    font-size: 12px;
+}
+.form_container a:hover{
+    text-decoration: underline;
+}
+.checkbox{
+    display:flex;
+    column-gap: 8px;
+    white-space:nowrap;
+    font-size: 12px;
+}
+.error-message {
+    color: red;
+    font-size: 12px;
+   
+    display: flex;
+}
+.checkbox input{
+    accent-color: #0534cff8;
+}
+.checkbox label{
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+    color:#0b0217;
+}
+.form_container .button{
+    background:#0534cff8;
+    margin-top: 30px;
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 10px;
+}
+.login_signup{
+    font-size: 12px;
+    text-align:  center;
+    margin-top: 15px;
+}
+
+
+/* about us */
+
+.about-us {
+    position: relative;
+    background: url("/WaterRefillingSystem/images/bg-3.jpg") no-repeat center center/cover;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 50px;
+}
+
+.overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    top: 0;
+    left: 0;
+}
+
+.about-content {
+    background-color: #0000005b;
+    position: relative;
+    max-width: 950px;
+    max-height: 800px;
+    height: 450px;
+    margin-left: 100px;
+    z-index: 2;
+}
+
+.about-content h2 {
+    font-size: 40px;
+    margin-top: 20px;
+    color: #ffd700;
+    font-family: 'Brush Script MT', cursive;
+    margin-bottom: 30px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.about-content p {
+    font-size: 18px;
+    margin-top: 20px;
+    line-height: 1.5;
+    color: #ffd700;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+/* Styling for Buttons */
+.buttons {
+    margin-left: 180px;
+    margin-top: 20px;
+    display: flex;
+    gap: 20px;
+}
+
+.button-order-now,
+.button-contact-us {
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px 25px;
+    border-radius: 5px;
+    transition: 0.3s ease-in-out;
+}
+
+/* Order Now Button */
+.button-order-now {
+    background: #ffd700;
+    color: black;
+    border: 2px solid #ffd700;
+}
+
+.button-order-now:hover {
+    background: transparent;
+    color: #ffffff;
+}
+
+/* Contact Us Button */
+.button-contact-us {
+    background: transparent;
+    color: #ffd700;
+    border: 2px solid #ffd700;
+}
+
+.button-contact-us:hover {
+    background: #ffd700;
+    color: black;
+}
+.about-logo {
+    position: relative;
+    z-index: 2;
+    width: 500px;
+    height: 500px;
+    margin-right: 100px;
+}
+
+
+/* General Section Styling */
+.water-refill, .products, .rental {
+    text-align: center;
+    padding: 60px 20px;
+    background: #111;
+    color: white;
+}
+
+.water-refill h2, .products h2, .rental h2 {
+    margin-top: 50px;
+    font-size: 36px;
+    color: #ffd700;
+    margin-bottom: 30px;
+}
+
+/* Styling for Refill Section */
+.refill-container, .product-container, .rental-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.refill, .product, .rental-item {
+    background: #222;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 280px;
+    box-shadow: 0px 4px 8px rgba(255, 215, 0, 0.3);
+    transition: transform 0.3s;
+}
+
+.refill:hover, .product:hover, .rental-item:hover {
+    transform: translateY(-5px);
+}
+
+.refill img, .product img, .rental-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+.refill h3, .product h3, .rental-item h3 {
+    font-size: 22px;
+    margin: 15px 0;
+    color: #ffd700;
+}
+
+.refill p, .product p, .rental-item p {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #ddd;
+}
+
+.button-order-now {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 16px;
+    padding: 8px 20px;
+    background: #ffd700;
+    color: black;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.button-order-now:hover {
+    background: #ffcc00;
+}
+
+/* Contact Section */
+.contact {
+    height: 1000px;
+    text-align: center;
+    padding: 60px 20px;
+    background: #1a1a1a;
+    color: white;
+}
+
+.contact h2 {
+    margin-top: 50px;
+    font-size: 36px;
+    color: #ffd700;
+    margin-bottom: 30px;
+}
+
+.contact-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.contact-info {
+    margin-top: 100px;
+    white-space: nowrap;
+    max-width: 400px;
+    text-align: left;
+}
+
+.contact-info p {
+    font-size: 24px;
+    margin: 10px 0;
+    color: #ddd;
+}
+
+.contact-map iframe {
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(255, 255, 255, 0.774);
+}
+
+
+/* Developers Section */
+.developers {
+    height:800px;
+    text-align: center;
+    padding: 60px 20px;
+    background: #111;
+    color: white;
+}
+
+.developers h2 {
+    font-size: 36px;
+    color: #ffd700;
+    margin-bottom: 30px;
+}
+
+.dev-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.developer {
+    background: #222;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 320px;
+    box-shadow: 0px 4px 8px rgba(255, 215, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.developer:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 6px 12px rgba(255, 215, 0, 0.4);
+}
+
+.developer img {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 3px solid #ffd700;
+}
+
+.developer h3 {
+    font-size: 22px;
+    margin: 10px 0;
+    color: #ffd700;
+}
+
+.developer p {
+    font-size: 16px;
+    color: #ddd;
+    margin: 5px 0;
+}
+
+.developer p:last-of-type {
+    font-size: 14px;
+    text-align: justify;
+    line-height: 1.5;
+    padding: 0 10px;
+}
+
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #000;
+    color: white;
+    font-size: 16px;
+}

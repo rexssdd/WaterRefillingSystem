@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Refilling Station System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #2196F3;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #f1f1f1;
+            padding: 1rem;
+        }
+        nav button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            margin: 0 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        nav button.active {
+            background-color: #2196F3;
+        }
+        .container {
+            padding: 2rem;
+        }
+        .card {
+            background: white;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #2196F3;
+            color: white;
+        }
+        .hidden {
+            display: none;
+        }
+        .qr-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .qr-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .qr-content img {
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Water Refilling Station System</h1>
+    </header>
+    <nav>
+        <button id="products-tab" class="active" onclick="showTab('products')">Products</button>
+        <button id="orders-tab" onclick="showTab('orders')">Orders</button>
+        <button id="history-tab" onclick="showTab('history')">History</button>
+    </nav>
+    <div class="container">
+        <div id="products" class="tab">
+            <h2>Products</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Refill Water</h3>
+                    <p>Price: ₱50</p>
+                    <button onclick="addToCart('Refill Water', 50)">Order</button>
+                </div>
+                <div class="card">
+                    <h3>1 Gallon of Water</h3>
+                    <p>Price: ₱170</p>
+                    <button onclick="addToCart('1 Gallon of Water', 170)">Order</button>
+                </div>
+                <div class="card">
+                    <h3>1 Gallon Jug</h3>
+                    <p>Price: ₱200</p>
+                    <button onclick="addToCart('1 Gallon Jug', 200)">Order</button>
+                </div>
+                <div class="card">
+                    <h3>Water Bottle Cap</h3>
+                    <p>Price: ₱20</p>
+                    <button onclick="addToCart('Water Bottle Cap', 20)">Order</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Delivery Information</h3>
+                <label for="address">Address:</label>
+                <input type="text" id="address" placeholder="Enter your address">
+                <h3>Payment Method</h3>
+                <label><input type="radio" name="payment" value="gcash" checked> GCash</label><br>
+                <label><input type="radio" name="payment" value="cod"> Cash on Delivery</label><br><br>
+                <button onclick="checkout()">Checkout</button>
+            </div>
+        </div>
+
+        <div id="orders" class="tab hidden">
+            <h2>Orders</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Product</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-table">
+                    <!-- Orders will be dynamically populated -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="history" class="tab hidden">
+            <h2>History</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Product</th>
+                        <th>Receipt</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table">
+                    <!-- History will be dynamically populated -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="qr-modal" class="qr-modal">
+        <div class="qr-content">
+            <h3>Scan this QR Code to Pay</h3>
+            <img src="/images/gcashqrcode.jpg" alt="GCash QR Code">
+            <p><button onclick="closeQRModal()">Close</button></p>
+        </div>
+    </div>
+
+    <div id="thank-you-modal" class="qr-modal">
+        <div class="qr-content">
+            <h3>Thank You for Your Order!</h3>
+            <p>Your tracking number is: <span id="tracking-number"></span></p>
+            <p>Your order number is: <span id="order-number"></span></p>
+            <p><button onclick="closeThankYouModal()">Close</button></p>
+        </div>
+    </div>
+
+    <script>
+        const cart = [];
+        const orders = [];
+        const history = [];
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(tabName).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(button => button.classList.remove('active'));
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        function addToCart(product, price) {
+            cart.push({ product, price });
+            alert(`${product} added to cart.`);
+        }
+
+        function checkout() {
+            const address = document.getElementById('address').value;
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+
+            if (!address) {
+                alert('Please enter your address.');
+                return;
+            }
+
+            if (paymentMethod === 'gcash') {
+                setTimeout(() => {
+                    showQRModal();
+                    setTimeout(() => {
+                        closeQRModal();
+                        showThankYouModal();
+                    }, 5000);
+                }, 0);
+            } else {
+                completeOrder();
+            }
+        }
+
+        function completeOrder() {
+            const orderId = `ORD-${Math.floor(Math.random() * 900000) + 100000}`;
+            const trackingNumber = `TRK-${Math.floor(Math.random() * 900000) + 100000}`;
+            cart.forEach(item => {
+                orders.push({ orderId, product: item.product, status: 'Pending' });
+                history.push({ orderId, product: item.product });
+            });
+            cart.length = 0;
+            document.getElementById('tracking-number').textContent = trackingNumber;
+            document.getElementById('order-number').textContent = orderId;
+            populateOrders();
+            populateHistory();
+        }
+
+        function showQRModal() {
+            document.getElementById('qr-modal').style.display = 'flex';
+        }
+
+        function closeQRModal() {
+            document.getElementById('qr-modal').style.display = 'none';
+        }
+
+        function showThankYouModal() {
+            const orderId = `ORD-${Math.floor(Math.random() * 900000) + 100000}`;
+            const trackingNumber = `TRK-${Math.floor(Math.random() * 900000) + 100000}`;
+            document.getElementById('order-number').textContent = orderId;
+            document.getElementById('tracking-number').textContent = trackingNumber;
+            document.getElementById('thank-you-modal').style.display = 'flex';
+        }
+
+        function closeThankYouModal() {
+            document.getElementById('thank-you-modal').style.display = 'none';
+        }
+
+        function populateOrders() {
+            const table = document.getElementById('orders-table');
+            table.innerHTML = '';
+            orders.forEach(order => {
+                const row = `
+                    <tr>
+                        <td>${order.orderId}</td>
+                        <td>${order.product}</td>
+                        <td>${order.status}</td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+
+        function populateHistory() {
+            const table = document.getElementById('history-table');
+            table.innerHTML = '';
+            history.forEach(record => {
+                const row = `
+                    <tr>
+                        <td>${record.orderId}</td>
+                        <td>${record.product}</td>
+                        <td><button onclick="viewReceipt('${record.orderId}')">View Receipt</button></td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+
+        function viewReceipt(orderId) {
+            alert(`Electronic receipt for order ID: ${orderId}`);
+        }
+
+        showTab('products');
+    </script>
+</body>
+</html>

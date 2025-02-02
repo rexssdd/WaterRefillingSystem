@@ -1,0 +1,381 @@
+<!-- <?php
+// Database connection
+$servername = "localhost";
+$username = "root";
+$password = "";     
+$database = "waterrefillingdatabase"; 
+
+$conn = new mysqli($servername, $username, $password, $database);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Handle login and registration
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $action = $_POST['action'];
+
+    if ($action === "register") {
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+        $email = $_POST['email'];
+        $contact_number = $_POST['contact_number'];
+
+        $stmt = $conn->prepare("INSERT INTO user (username, password, email, contact_number, registration_date) VALUES (?, ?, ?, ?, NOW())");
+        $stmt->bind_param("ssss", $username, $password, $email, $contact_number);
+
+        if ($stmt->execute()) {
+            echo "<script>alert('Registration successful!'); window.location.href='newlogin.html';</script>";
+        } else {
+            echo "<script>alert('Registration failed!');</script>";
+        }
+
+        $stmt->close();
+
+    } elseif ($action === "login") {
+        $username = $_POST['email'];
+        $password = $_POST['password'];
+
+        $stmt = $conn->prepare("SELECT password FROM user WHERE email = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $stmt->store_result();
+        $stmt->bind_result($hashed_password);
+        $stmt->fetch();
+
+        if ($stmt->num_rows > 0 && password_verify($password, $hashed_password)) {
+            echo "<script>alert('Login successful!'); window.location.href='dashboard.php';</script>";
+        } else {
+            echo "<script>alert('Invalid username or password!');</script>";
+        }
+        $stmt->close();
+    }
+}
+
+$conn->close();
+?> -->
+
+<!DOCTYPE html>
+   <html lang="en">
+   <head>
+      <meta charset="UTF-8">
+    <meta http-equiv=" X-UA-Compatible" content = "IE-edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jz Waters Login & Registration Form</title>
+<link   rel = "stylesheet"  href = "style1.css"/>
+<link rel = "stylesheet" href = " https://unicons.iconscout.com/release/v4.0.0/css/line.css"/>
+   </head>
+   <body>
+    <header class="header">
+    <nav class="nav">
+        <a href="#" class="nav_logo">
+            <img src="/WaterRefillingSystem/images/Jz.png" alt="Jz Waters Logo" class="logo">
+            Jz Waters
+        </a>
+        
+
+        <ul class = "nav_items">
+            <li class = "nav_item">
+                <a href="#home" class="nav_link">Home</a>
+                <a href="#products" class="nav_link">Products</a>
+                <a href="#contactus" class="nav_link">Contact Us</a>
+                <a href="#developers" class="nav_link">Developers</a>
+            </li>
+        </ul>
+        <button class = "button" id = "form-open">Login</button>
+     </nav>
+    </header>
+   
+    <section class="home" id="home">
+        <div class="form_container" >
+            <i class="uil uil-times form_close"></i>
+            <!-- loginform -->
+             <div class="form login_form">
+              <form action="" method="POST"> 
+  
+                  <h2>Login</h2>
+  
+                  <div class="input_box">
+                      <input type="email" placeholder="Enter your email" required maxlength="30"/>
+                      <i class="uil uil-user username"></i>
+  
+                  </div>
+                  
+                  <div class="input_box">
+                      <input type="password" placeholder="Enter your password" required/>
+                      <i class="uil uil-lock password"></i>
+                      <i class="uil uil-eye-slash pw_hide"></i>
+                  </div>
+                  <div class="option_field">
+                      <span class="checkbox">
+                          <input type="checkbox" id="check">
+                          <label for="check">Remember me</label>
+                      </span>
+                      <a href="#" class="forgot_pw">Forgot password?</a>
+                  </div>
+                  <button class="button"> Login now</button>
+                  <div class="login_signup"> Don't have an account? <a href="#" id="signup"> Sign Up</a>
+                  </div>
+                  <form>
+             </div>
+  
+            <!-- signup form -->
+<div class="form signup_form">
+    <form id="signupForm" method="POST"> 
+        <h2>Sign up</h2>
+
+        <div class="input_box">
+            <input type="username" id="username" placeholder="Enter your username" required/>
+            <i class="uil uil-user username"></i>
+            <p class="error-message" id="usernameError"></p>
+        </div>
+
+        <div class="input_box">
+            <input type="email" id="email" placeholder="Enter your email" required/>
+            <i class="uil uil-envelope-alt email"></i>
+            <p class="error-message" id="emailError"></p>
+        </div>
+
+        <div class="input_box">
+            <input type="text" id="contact" placeholder="Enter your contact number" required maxlength="11"/>
+            <i class="uil uil-phone contact"></i>
+            <p class="error-message" id="contactError"></p>
+        </div>
+
+        <div class="input_box">
+            <input type="password" id="password" placeholder="Create password" required/>
+            <i class="uil uil-lock password"></i>
+            <i class="uil uil-eye-slash pw_hide"></i>
+            <p class="error-message" id="passwordError"></p>
+        </div>
+
+        <div class="input_box">
+            <input type="password" id="confirmPassword" placeholder="Confirm password" required/>
+            <i class="uil uil-lock password"></i>
+            <i class="uil uil-eye-slash pw_hide"></i>
+            <p class="error-message" id="confirmPasswordError"></p>
+        </div>      
+
+        <button type="submit" class="button">Sign up now</button>
+
+        <div class="login_signup">
+            Already have an account? <a href="#" id="login">Login now</a>
+        </div>
+                  <form>
+             </div>
+          </div>
+      </div>
+        <section class="about-us">
+            <div class="overlay"></div>
+            <div class="about-content">
+                <h2>About us</h2>
+                <p>
+                    Welcome to <strong>JZ Water Refilling Station</strong>, your trusted provider of clean, safe, and high-quality drinking water. 
+                    We are committed to delivering purified, mineral, and alkaline water that meets the highest industry standards, ensuring 
+                    the health and well-being of our customers.
+                </p>
+            <div></div>
+                <p>
+                    At <strong>JZ Water</strong>, we use advanced filtration and purification technology, including reverse osmosis, UV sterilization, 
+                    and multi-stage filtration, to guarantee that every drop is fresh, pure, and free from contaminants.
+                </p>    
+                <div class="buttons">
+                    <a href="#" class="button-order-now">Order Now</a>
+                    <a href="#contactus" class="button-contact-us">Contact Us</a>
+                </div>
+            </div>
+            <img src="/WaterRefillingSystem/images/Jz.png" alt="JZ Waters Logo" class="about-logo">
+        </section>
+    
+       
+        <!-- Water Refill Section -->
+<section class="water-refill" id="products">
+    <h2>Water Refill Options</h2>
+    <div class="refill-container">
+        <div class="refill">
+            <img src="/WaterRefillingSystem/images/1.png" alt="Purified Water 1 Gallon">
+            <h3>Purified Water</h3>
+            <p>Clean and safe drinking water processed with advanced purification.</p>
+            <p><strong>Price:</strong> ₱50</p>
+            <p><strong>Stock:</strong> 100 available</p>
+            <a href="#form-open" class="button-order-now">Order Now</a>
+        </div>
+
+        <div class="refill">
+            <img src="/WaterRefillingSystem/images/4.png" alt="Mineral Water 1 Gallon">
+            <h3>Mineral Water </h3>
+            <p>Rich in essential minerals for a healthier lifestyle.</p>
+            <p><strong>Price:</strong> ₱55</p>
+            <p><strong>Stock:</strong> 80 available</p>
+            <a href="#form-open" class="button-order-now">Order Now</a>
+        </div>
+
+        <div class="refill">
+            <img src="/WaterRefillingSystem/images/2.png" alt="Alkaline Water 1 Gallon">
+            <h3>Alkaline Water</h3>
+            <p>Balanced pH level for better hydration and well-being.</p>
+            <p><strong>Price:</strong> ₱60</p>
+            <p><strong>Stock:</strong> 60 available</p>
+            <a href="#form-open" class="button-order-now">Order Now</a>
+        </div>
+    </div>
+</section>
+
+<!-- Products & Accessories Section -->
+<section class="products" id="products">
+    <h2>Products & Accessories</h2>
+    <div class="product-container">
+        <div class="product">
+            <img src="/WaterRefillingSystem/images/5.png" alt="Empty 1 Gallon Bottle">
+            <h3>Empty Bottle </h3>
+            <p>Reusable and durable plastic bottle for refills.</p>
+            <p><strong>Price:</strong> ₱100</p>
+            <p><strong>Stock:</strong> 50 available</p>
+            <a href="#form-open" class="button-order-now">Order Now</a>
+        </div>
+
+        <div class="product">
+            <img src="/WaterRefillingSystem/images/2.png" alt="Water Jug">
+            <h3>Water Jug </h3>
+            <p>Perfect for long-term storage and easy dispensing.</p>
+            <p><strong>Price:</strong> ₱250</p>
+            <p><strong>Stock:</strong> 30 available</p>
+            <a href="#form-open" class="button-order-now">Order Now</a>
+        </div>
+
+        <div class="product">
+            <img src="/WaterRefillingSystem/images/3.png" alt="Bottle Caps">
+            <h3>Bottle Caps</h3>
+            <p>Secure and leak-proof caps for all bottle sizes.</p>
+            <p><strong>Price:</strong> ₱10 (per cap)</p>
+            <p><strong>Stock:</strong> 200 available</p>
+            <a href="#form-open" class="button-order-now">Order Now</a>
+        </div>
+    </div>
+</section>
+
+<!-- Rental Services Section -->
+<section class="rental" id="products">
+    <h2>Rental Services</h2>
+    <div class="rental-container">
+        <div class="rental-item">
+            <img src="/WaterRefillingSystem/images/6.png" alt="Water Dispenser">
+            <h3>Water Dispenser Rental</h3>
+            <p>Rent a high-quality water dispenser for home or office.</p>
+            <p><strong>Price:</strong> ₱500/month</p>
+            <p><strong>Stock:</strong> 15 available</p>
+            <a href="#form-open" class="button-order-now">Rent Now</a>
+        </div>
+    </div>
+</section>
+<div></div>
+<!-- Contact Information Section -->
+<section class="contact" id="contactus">
+    <div>
+    <h2>Contact Us</h2>
+    <div class="contact-container">
+        <div class="contact-info">
+            <p><strong>📍 Address:</strong> Reclusado St.,  Apokon, Tagum City Davao Del Norte</p>
+            <p><strong>📞 Phone:</strong> +63 912 345 6789</p>
+            <p><strong>✉️ Email:</strong> support@jzwater.com</p>
+            <p><strong>🕒 Business Hours:</strong> Mon-Sat: 8 AM - 8 PM | Sun: 9 AM - 5 PM</p>
+        </div>
+        <div class="contact-map">
+            <iframe src="https://maps.google.com/maps?q=/Reclusado,+tagum%20Philippines&t=&z=13&ie=UTF8&iwloc=&output=embed" 
+                width="500" height="500" frameborder="0" ></iframe>
+            </div>
+        </div>
+        </div>
+    </section>
+
+<!-- Developers Section -->
+<section class="developers" id="developers">
+    <h2>Meet the Developers</h2>
+    <div class="dev-container">
+        <div class="developer">
+            <img src="/WaterRefillingSystem/images/(6) REX.jpg" alt="Developer 1">
+            <h3>Rexcel Jay A. Lusica</h3>
+            <p>Lead Developer</p>
+            <p>The Lead Developer of JZ Water Refilling Station’s online system.
+                 With expertise in full-stack development, he specializes in building efficient, user-friendly, and secure web applications. 
+                 Passionate about technology and innovation, Rexcel ensures seamless functionality and a great user experience. 
+                His dedication to coding and problem-solving drives the continuous improvement of the system.</p>
+        </div>
+        <div class="developer">
+            <img src="/WaterRefillingSystem/images/joren.jpg" alt="Developer 2">
+            <h3>Joren Montejo</h3>
+            <p>Frontend Designer</p>
+            <p> A skilled Frontend Designer focused on creating visually appealing and user-friendly web interfaces. 
+                With expertise in HTML, CSS, and JavaScript, 
+                Joren ensures smooth, responsive, and intuitive user experiences.
+
+            </p>
+  
+        </div>
+        <div class="developer">
+            <img src="/WaterRefillingSystem/images/jomarie.jpg" alt="Developer 3">
+            <h3>Jomarie Travilla</h3>
+            <p>Backend Engineer</p>
+            <p> Aa Backend Engineer with expertise in server-side technologies and databases.
+                 Skilled in languages like Java and Python, 
+                Jomarie ensures efficient, secure, and scalable backend systems.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <p>&copy; 2024 JZ Water Refilling Station | All Rights Reserved.</p>
+</footer>
+
+
+    </section>
+
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const sections = document.querySelectorAll("section");
+            const navLinks = document.querySelectorAll(".nav_link");
+        
+            function highlightNav() {
+                let current = "";
+        
+                sections.forEach((section) => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    if (pageYOffset >= sectionTop - sectionHeight / 3) {
+                        current = section.getAttribute("id");
+                    }
+                });
+        
+                navLinks.forEach((link) => {
+                    link.classList.remove("active");
+                    if (link.getAttribute("href").substring(1) === current) {
+                        link.classList.add("active");
+                    }
+                });
+            }
+        
+            window.addEventListener("scroll", highlightNav);
+        
+            // Smooth Scroll for Navbar Links
+            navLinks.forEach((link) => {
+                link.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute("href").substring(1);
+                    const targetSection = document.getElementById(targetId);
+        
+                    window.scrollTo({
+                        top: targetSection.offsetTop - 50, 
+                        behavior: "smooth",
+                    });
+                });
+            });
+        });
+        </script>
+        
+    <script src ="/WaterRefillingSystem/javascript/script.js"></script>
+   </body>
+</html>

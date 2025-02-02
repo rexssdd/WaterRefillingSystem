@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pure Water</title>
+    <style>
+        /* Reset and Base Styles */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #eaf6fc;
+            color: #000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;    
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 10px 0;
+        }
+
+        .navbar .container {
+            display: flex; /* Flexbox for alignment */
+            justify-content: space-between; /* Space between logo and nav links */
+            align-items: center; /* Align items vertically */
+        }
+
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .navbar .nav-links {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex; /* Align links horizontally */
+            gap: 20px; /* Add space between links */
+        }
+
+        .navbar .nav-links a {
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 10px 20px; /* Button-like padding */
+            border-radius: 5px;
+            font-weight: bold;
+            color: #000;
+            background-color: transparent;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .navbar .nav-links a:hover {
+            background-color: #f0f0f0; /* Slight hover effect */
+        }
+
+        .navbar .login-btn {
+            border: 1px solid #000; /* Only login has a border */
+        }
+
+        .navbar .login-btn:hover {
+            background-color: #000;
+            color: #fff;
+        }
+
+        /* Hero Section Styles */
+        .hero {
+            background-color: #eaf6fc;
+            text-align: left;
+            padding: 50px 0;
+            margin-top: 190px; /* Added top margin to bring it down */
+
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            margin: 0 0 20px;
+        }
+
+        .hero p {
+            font-size: 1rem;
+            margin: 0 0 30px;
+            max-width: 600px;
+        }
+
+        .hero .buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .hero .btn {
+            text-decoration: none;
+            padding: 10px 20px;
+            border: 2px solid #000;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .hero .about-btn {
+            background-color: transparent;
+            color: #000;
+        }
+
+        .hero .about-btn:hover {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .hero .signup-btn {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .hero .signup-btn:hover {
+            background-color: #fff;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="container">
+            <h1 class="logo">Mineral Water</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#" class="login-btn">Login</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main class="hero">
+        <div class="container">
+            <div class="hero-text">
+                <h2>Refresh Your Life with Pure Water</h2>
+                <p>
+                    Experience the convenience of our water refilling system, designed to
+                    keep you hydrated effortlessly. Join us in making clean water accessible
+                    for everyone.
+                </p>
+                <div class="buttons">
+                    <a href="#" class="btn about-btn">About Us</a>
+                    <a href="#" class="btn signup-btn">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

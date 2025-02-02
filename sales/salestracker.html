@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales and ROI Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+        .container {
+            padding: 2rem;
+        }
+        .card {
+            background: white;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        .chart-container {
+            margin-top: 2rem;
+        }
+        .hidden {
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sales and ROI Tracker</h1>
+    </header>
+    <div class="container">
+        <div class="grid">
+            <div class="card">
+                <h2>Orders Summary</h2>
+                <p>Total Orders Today: <span id="orders-today">0</span></p>
+                <p>Total Orders This Week: <span id="orders-week">0</span></p>
+                <p>Total Orders This Month: <span id="orders-month">0</span></p>
+                <p>Total Orders This Year: <span id="orders-year">0</span></p>
+            </div>
+            <div class="card">
+                <h2>Financial Summary</h2>
+                <p>Total Revenue: $<span id="total-revenue">0.00</span></p>
+                <p>Total Costs: $<span id="total-costs">0.00</span></p>
+                <p>ROI: <span id="roi">0%</span></p>
+                <p>Status: <span id="status">Neutral</span></p>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2>Orders Over Time</h2>
+            <canvas id="ordersChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h2>Order Records</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Revenue</th>
+                        <th>Cost</th>
+                        <th>Profit/Loss</th>
+                    </tr>
+                </thead>
+                <tbody id="order-records">
+                    <!-- Rows will be dynamically populated -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const orders = [
+            // Example orders, replace with API or database integration
+            { id: 1, date: '2025-01-01', revenue: 500, cost: 700 },
+            { id: 2, date: '2025-01-02', revenue: 1000, cost: 400 },
+            { id: 3, date: '2025-01-03', revenue: 200, cost: 300 },
+            { id: 4, date: '2025-01-04', revenue: 500, cost: 600 },
+
+        ];
+
+        function calculateSummary() {
+            const totalRevenue = orders.reduce((sum, order) => sum + order.revenue, 0);
+            const totalCosts = orders.reduce((sum, order) => sum + order.cost, 0);
+            const roi = ((totalRevenue - totalCosts) / totalCosts * 100).toFixed(2);
+            const status = totalRevenue > totalCosts ? 'Gain' : totalRevenue < totalCosts ? 'Loss' : 'Neutral';
+
+            document.getElementById('total-revenue').textContent = totalRevenue.toFixed(2);
+            document.getElementById('total-costs').textContent = totalCosts.toFixed(2);
+            document.getElementById('roi').textContent = `${roi}%`;
+            document.getElementById('status').textContent = status;
+        }
+
+        function populateOrders() {
+            const tbody = document.getElementById('order-records');
+            tbody.innerHTML = '';
+            orders.forEach(order => {
+                const profitLoss = order.revenue - order.cost;
+                const row = `
+                    <tr>    
+                        <td>${order.id}</td>
+                        <td>${order.date}</td>
+                        <td>$${order.revenue.toFixed(2)}</td>
+                        <td>$${order.cost.toFixed(2)}</td>
+                        <td>$${profitLoss.toFixed(2)}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function generateChart() {
+            const ctx = document.getElementById('ordersChart').getContext('2d');
+            const labels = orders.map(order => order.date);
+            const data = {
+                labels,
+                datasets: [
+                    {
+                        label: 'Revenue',
+                        data: orders.map(order => order.revenue),
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    },
+                    {
+                        label: 'Cost',
+                        data: orders.map(order => order.cost),
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    }
+                ]
+            };
+
+            new Chart(ctx, {
+                type: 'line',
+                data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        calculateSummary();
+        populateOrders();
+        generateChart();
+    </script>
+</body>
+</html>
