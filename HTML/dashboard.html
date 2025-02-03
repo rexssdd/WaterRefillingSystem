@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional POS System</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f4f4;
+        }
+        .sidebar {
+            height: 100vh;
+            width: 250px;
+            position: fixed;
+            background-color: #343a40;
+            padding-top: 20px;
+        }
+        .sidebar a {
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            display: block;
+        }
+        .sidebar a:hover {
+            background-color: #495057;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 20px;
+        }
+        .navbar {
+            background-color: #007bff;
+        }
+        .navbar a {
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+        }
+        .navbar a:hover {
+            background-color: #0056b3;
+        }
+        .section {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+    </style>
+    <script>
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+    </script>
+</head>
+<body>
+    <div class="sidebar text-white">
+        <h4 class="text-center">POS System</h4>
+        <a href="#" onclick="showSection('products')">Products</a>
+        <a href="#" onclick="showSection('orders')">Orders</a>
+        <a href="#" onclick="showSection('history')">Order History</a>
+        <a href="#" onclick="showSection('tracking')">Order Tracking</a>
+        <a href="#">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div id="products" class="section active">
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">Products</a>
+                </div>
+            </nav>
+            <h2>Products</h2>
+            <a href="#" onclick="showSection('refillable')">Refillable</a> |
+            <a href="#" onclick="showSection('buyable')">Buyable</a> |
+            <a href="#" onclick="showSection('renting')">Renting</a>
+            
+            <div id="refillable" class="section">
+                <h3>Refillable Products</h3>
+                <p>For existing customers who want a refill.</p>
+            </div>
+            <div id="buyable" class="section">
+                <h3>Buyable Products</h3>
+                <p>Purchase water containers, empty bottles, bottle caps, etc.</p>
+            </div>
+            <div id="renting" class="section">
+                <h3>Renting Products</h3>
+                <p>Rent water dispensers and check availability.</p>
+            </div>
+        </div>
+        
+        <div id="orders" class="section">
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">Orders</a>
+                </div>
+            </nav>
+            <h2>Orders</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Status</th>
+                        <th>Items</th>
+                        <th>Total Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#12345</td>
+                        <td>Pending</td>
+                        <td>Water Container x1</td>
+                        <td>₱200</td>
+                        <td><button class="btn btn-primary btn-sm">View</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="history" class="section">
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">Order History</a>
+                </div>
+            </nav>
+            <h2>Order History</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Total Price</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#12340</td>
+                        <td>2024-02-01</td>
+                        <td>Water Container x2</td>
+                        <td>₱400</td>
+                        <td>Delivered</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="tracking" class="section">
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">Order Tracking</a>
+                </div>
+            </nav>
+            <h2>Order Tracking</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Estimated Delivery</th>
+                        <th>Current Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#12345</td>
+                        <td>2024-02-03</td>
+                        <td>Out for Delivery</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

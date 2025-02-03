@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket Cashier Dashboard</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f4f4;
+        }
+        .navbar {
+            background-color: #007bff;
+        }
+        .navbar a {
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+        }
+        .navbar a:hover {
+            background-color: #0056b3;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            text-align: center;
+        }
+        .cart-summary {
+            margin-top: 30px;
+        }
+        .cart-summary h3 {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Supermarket Cashier</a>
+            <div class="ms-auto">
+                <a href="#" class="btn btn-light">Logout</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <h2 class="mb-4">Shopping Cart</h2>
+        
+        <!-- Product Scanning Area -->
+        <div class="mb-4">
+            <input type="text" id="productBarcode" class="form-control" placeholder="Scan Product Barcode or Enter Product Name">
+            <button type="button" class="btn btn-primary mt-3" onclick="addProduct()">Add Product</button>
+        </div>
+
+        <!-- Cart Table -->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Price (₱)</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="cartItems">
+                <!-- Dynamically generated products will go here -->
+            </tbody>
+        </table>
+
+        <!-- Cart Summary -->
+        <div class="cart-summary">
+            <h3>Total: ₱<span id="totalAmount">0.00</span></h3>
+            <label for="paymentAmount" class="form-label">Enter Payment Amount:</label>
+            <input type="number" id="paymentAmount" class="form-control">
+            <button type="button" class="btn btn-success mt-3" onclick="calculateChange()">Complete Transaction</button>
+        </div>
+
+        <!-- Change Section -->
+        <div id="changeSection" class="mt-4" style="display: none;">
+            <h4>Change: ₱<span id="changeAmount">0.00</span></h4>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+        let productCount = 0;
+
+        // Sample Products (Usually this data would be from an API or database)
+        const availableProducts = {
+            "apple": { name: "Apple", price: 30 },
+            "banana": { name: "Banana", price: 20 },
+            "chocolate": { name: "Chocolate", price: 50 },
+            "water": { name: "Water", price: 10 }
+        };
+
+        // Add product to the cart
+        function addProduct() {
+            const barcode = document.getElementById("productBarcode").value.toLowerCase().trim();
+
+            if (!barcode || !availableProducts[barcode]) {
+                alert("Product not found or invalid barcode!");
+                return;
+            }
+
+            // Check if product already exists in the cart
+            const existingProduct = cart.find(product => product.name === availableProducts[barcode].name);
+            if (existingProduct) {
+                existingProduct.quantity += 1;
+                existingProduct.total = existingProduct.price * existingProduct.quantity;
+            } else {
+                const newProduct = {
+                    name: availableProducts[barcode].name,
+                    price: availableProducts[barcode].price,
+                    quantity: 1,
+                    total: availableProducts[barcode].price
+                };
+                cart.push(newProduct);
+            }
+
+            renderCart();
+            document.getElementById("productBarcode").value = "";
+        }
+
+        // Render cart items
+        function renderCart() {
+            const cartItemsContainer = document.getElementById("cartItems");
+            cartItemsContainer.innerHTML = "";
+
+            cart.forEach((product, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>₱${product.price}</td>
+                    <td>
+                        <input type="number" class="form-control quantity-input" value="${product.quantity}" data-index="${index}" onchange="updateQuantity(${index})">
+                    </td>
+                    <td>₱${product.total}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="removeProduct(${index})">Remove</button></td>
+                `;
+                cartItemsContainer.appendChild(row);
+            });
+
+            calculateTotal();
+        }
+
+        // Update quantity of product in cart
+        function updateQuantity(index) {
+            const newQuantity = parseInt(document.querySelectorAll(".quantity-input")[index].value) || 1;
+            cart[index].quantity = newQuantity;
+            cart[index].total = cart[index].price * newQuantity;
+            renderCart();
+        }
+
+        // Remove product from cart
+        function removeProduct(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        // Calculate total amount
+        function calculateTotal() {
+            const totalAmount = cart.reduce((sum, product) => sum + product.total, 0);
+            document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
+        }
+
+        // Calculate change after payment
+        function calculateChange() {
+            const paymentAmount = parseFloat(document.getElementById("paymentAmount").value);
+            const totalAmount = parseFloat(document.getElementById("totalAmount").textContent);
+
+            if (paymentAmount < totalAmount) {
+                alert("Insufficient payment!");
+                return;
+            }
+
+            const change = paymentAmount - totalAmount;
+            document.getElementById("changeAmount").textContent = change.toFixed(2);
+            document.getElementById("changeSection").style.display = 'block';
+        }
+    </script>
+</body>
+</html>

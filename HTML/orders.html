@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders Management</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f4f7f6;
+        }
+
+        .navbar {
+            border-bottom: 2px solid #0066cc;
+        }
+
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            padding-top: 20px;
+        }
+
+        .table th, .table td {
+            text-align: center;
+        }
+
+        .form-container {
+            margin-top: 20px;
+        }
+
+        .card {
+            margin-bottom: 20px;
+        }
+
+        .btn-primary, .btn-secondary {
+            font-weight: bold;
+        }
+
+        .card-header {
+            background-color: #0066cc;
+            color: white;
+        }
+
+        .order-actions {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Water Refilling System Admin</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="products.html">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="employees.html">Employees</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="delivery.html">Delivery</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="orders.html">Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="sales.html">Sales Tracking</a>
+                    </li>
+                    <li class="nav-item ms-auto">
+                        <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Orders Management Section -->
+    <div class="container mt-4">
+        <h2 class="card-header">Manage Orders</h2>
+        
+        <!-- Order Summary Section -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h4>Order Summary</h4>
+                <p>Total Orders Today: <span id="orders-today">0</span></p>
+                <p>Total Orders This Week: <span id="orders-week">0</span></p>
+                <p>Total Orders This Month: <span id="orders-month">0</span></p>
+                <p>Total Orders This Year: <span id="orders-year">0</span></p>
+                <p>Total Profit: $<span id="total-profit">0.00</span></p>
+                <p>Total Loss (Damages): $<span id="total-loss">0.00</span></p>
+            </div>
+        </div>
+
+        <!-- Order Table Section -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h4>Client Orders</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer Name</th>
+                            <th>Quantity (Liters)</th>
+                            <th>Status</th>
+                            <th>Revenue</th>
+                            <th>Cost</th>
+                            <th>Profit/Loss</th>
+                            <th>Loss (Damages)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-records">
+                        <!-- Rows will be dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample order data
+        const orders = [
+            { id: 1, customerName: 'John Doe', quantity: 20, status: 'Completed', revenue: 500, cost: 400, damage: 0 },
+            { id: 2, customerName: 'Jane Smith', quantity: 30, status: 'Pending', revenue: 800, cost: 600, damage: 0 },
+            { id: 3, customerName: 'Mark Johnson', quantity: 10, status: 'Completed', revenue: 300, cost: 250, damage: 50 },
+            { id: 4, customerName: 'Sarah Lee', quantity: 15, status: 'Completed', revenue: 450, cost: 350, damage: 0 },
+            { id: 5, customerName: 'Tommy Adams', quantity: 25, status: 'Completed', revenue: 650, cost: 500, damage: 100 }
+        ];
+
+        function calculateSummary() {
+            const totalRevenue = orders.reduce((sum, order) => sum + order.revenue, 0);
+            const totalCosts = orders.reduce((sum, order) => sum + order.cost, 0);
+            const totalDamageLoss = orders.reduce((sum, order) => sum + order.damage, 0);
+            const totalProfit = totalRevenue - totalCosts - totalDamageLoss;
+
+            document.getElementById('orders-today').textContent = orders.length; // Placeholder: Adjust with actual calculation logic for today
+            document.getElementById('orders-week').textContent = orders.length; // Placeholder: Adjust with actual calculation logic for this week
+            document.getElementById('orders-month').textContent = orders.length; // Placeholder: Adjust with actual calculation logic for this month
+            document.getElementById('orders-year').textContent = orders.length; // Placeholder: Adjust with actual calculation logic for this year
+            document.getElementById('total-profit').textContent = totalProfit.toFixed(2);
+            document.getElementById('total-loss').textContent = totalDamageLoss.toFixed(2);
+        }
+
+        function populateOrders() {
+            const tbody = document.getElementById('order-records');
+            tbody.innerHTML = '';
+            orders.forEach(order => {
+                const profitLoss = order.revenue - order.cost - order.damage;
+                const status = order.status === 'Completed' ? 'Completed' : 'Pending';
+                const row = `
+                    <tr>    
+                        <td>${order.id}</td>
+                        <td>${order.customerName}</td>
+                        <td>${order.quantity}</td>
+                        <td>${status}</td>
+                        <td>$${order.revenue.toFixed(2)}</td>
+                        <td>$${order.cost.toFixed(2)}</td>
+                        <td>$${profitLoss.toFixed(2)}</td>
+                        <td>$${order.damage.toFixed(2)}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Initialize page
+        calculateSummary();
+        populateOrders();
+
+        function logout() {
+            alert('Logging out!');
+            // Redirect to login page or handle logout functionality
+        }
+    </script>
+</body>
+</html>

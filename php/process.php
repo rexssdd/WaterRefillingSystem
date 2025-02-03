@@ -1,79 +1,68 @@
 <?php
-// Start session
-session_start();
+include 'dbconnect.php'; // Include the database connection
 
-// Database connection
-$host = 'localhost';
-$dbname = 'waterrefillingdatabase';
-$user = 'root';
-$password = '';
-
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
-
-// Check if request is POST
+// Check if form is submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-
-    if ($action === 'register') {
-        // Validate input
-        if (empty($_POST['username']) || empty($_POST['password']) || empty($_POST['email']) || empty($_POST['contact_number'])) {
-            die("All fields are required.");
-        }
-
-        // Sanitize input
-        $username = htmlspecialchars(strip_tags($_POST['username']));
+    // Handle login
+    if (isset($_POST['email']) && isset($_POST['password']) && !isset($_POST['username'])) {
+        $email = $_POST['email'];
         $password = $_POST['password'];
-        $email = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
-        $contact_number = htmlspecialchars(strip_tags($_POST['contact_number']));
-        $registration_date = date("Y-m-d"); // Store current date
 
-        if (!$email) {
-            die("Invalid email format.");
+        // Query to fetch user data
+        $query = "SELECT * FROM user WHERE email = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+
+            // Verify password
+            if (password_verify($password, $user['password'])) {
+                // Start session and store user info
+                session_start();
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['username'] = $user['username'];
+                header("Location: dashboard.php"); // Redirect to dashboard
+            } else {
+                echo "Invalid password.";
+            }
+        } else {
+            echo "No user found with that email.";
+        }
+    }
+
+    // Handle signup
+    if (isset($_POST['username']) && isset($_POST['password']) && isset($_POST['confirmPassword'])) {
+        $username = $_POST['username'];
+        $email = $_POST['email'];
+        $contact_number = $_POST['contact'];
+        $password = $_POST['password'];
+        $confirmPassword = $_POST['confirmPassword'];
+
+        // Check if passwords match
+        if ($password !== $confirmPassword) {
+            echo "Passwords do not match.";
+            exit();
         }
 
-        // Insert user into database (correct column names)
-        $stmt = $pdo->prepare("INSERT INTO user (username, password, email, contact_number, registration_date) VALUES (:username, :password, :email, :contact_number, :registration_date)");
-        $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':password', $password);
-        $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':contact_number', $contact_number);
-        $stmt->bindParam(':registration_date', $registration_date);
+        // Hash the password before storing
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        // Insert user into the database
+        $query = "INSERT INTO user (username, password, email, contact_number, registration_date) VALUES (?, ?, ?, ?, CURDATE())";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("ssss", $username, $hashedPassword, $email, $contact_number);
 
         if ($stmt->execute()) {
-            echo "<script>alert('Registration successful!'); window.location.href='/WaterRefillingSystem/login.html';</script>";
+            echo "Registration successful.";
+            header("Location: login.php"); // Redirect to login page
         } else {
-            echo "<script>alert('Registration failed.');</script>";
+            echo "Error: " . $stmt->error;
         }
-
-    } elseif ($action === 'login') {
-        if (empty($_POST['username']) || empty($_POST['password'])) {
-            die("Username and password are required.");
-        }
-
-        $username = htmlspecialchars(strip_tags($_POST['username']));
-        $password = $_POST['password'];
-
-        // Check user credentials (correct column names)
-        $stmt = $pdo->prepare("SELECT * FROM user WHERE username = :username");
-        $stmt->bindParam(':username', $username);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['username'] = $user['username'];
-            header("Location: /WaterRefillingSystem/dashboard.php"); // Redirect to dashboard
-            exit;
-        } else {
-            echo "<script>alert('Invalid username or password.');</script>";
-        }
-    } else {
-        echo "<script>alert('Invalid action.');</script>";
     }
+} else {
+    echo "Invalid request method.";
 }
 ?>
