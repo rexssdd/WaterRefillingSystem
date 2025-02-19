@@ -1,14 +1,14 @@
 <?php
-$host = "localhost"; // Change if using a different host
-$dbname = "wrsystem"; // Ensure this is correct
-$username = "root"; // Your MySQL username
-$password = ""; // Your MySQL password
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "wrsystem";
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    echo json_encode(["error" => "Exception: " . $e->getMessage()]);
-    exit();
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
 ?>

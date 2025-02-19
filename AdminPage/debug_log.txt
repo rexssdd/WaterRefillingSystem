@@ -1,0 +1,5 @@
+Array
+(
+    [product_id] => 1
+    [new_price] => 20.00
+)

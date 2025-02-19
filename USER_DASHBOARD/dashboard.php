@@ -193,7 +193,7 @@ if (isset($_GET['logout'])) {
             <h3>Rental Products</h3>
             <div class="product-container">
                 <?php foreach ($rental_products as $product): ?>
-                    <?php include 'rental_product_card.php'; ?>
+                    <?php include '/xampp/htdocs/WaterRefillingSystem/php/rental_product_card.php'; ?>
                 <?php endforeach; ?>
             </div>
             
@@ -201,7 +201,7 @@ if (isset($_GET['logout'])) {
             <h3>Normal Products</h3>
             <div class="product-container">
                 <?php foreach ($normal_products as $product): ?>
-                    <?php include 'product_card.php'; ?>
+                    <?php include '/xampp/htdocs/WaterRefillingSystem/php/product_card.php'; ?>
                 <?php endforeach; ?>
             </div>
 
@@ -223,7 +223,7 @@ if (isset($_GET['logout'])) {
             // Disable button to prevent multiple clicks
             button.disabled = true;
 
-            fetch("add_to_cart.php", { // Call the new PHP handler
+            fetch("/xampp/htdocs/WaterRefillingSystem/php/add_to_cart.php", { // Call the new PHP handler
                 method: "POST",
                 body: formData
             })
@@ -246,7 +246,7 @@ if (isset($_GET['logout'])) {
 });
 
 function fetchCartCount() {
-    fetch('fetch_cart_count.php')
+    fetch('/xampp/htdocs/WaterRefillingSystem/php/fetch_cart_count.php')
     .then(response => response.json())
     .then(data => {
         document.getElementById('cart-count').innerText = data.cart_count;

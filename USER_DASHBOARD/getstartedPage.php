@@ -30,9 +30,9 @@ if (isset($_POST['login_submit'])) {
 
     // Check if input is an email or username
     if (filter_var($login_input, FILTER_VALIDATE_EMAIL)) {
-        $stmt = $conn->prepare("SELECT * FROM user WHERE email = ?");
+        $stmt = $conn->prepare("SELECT user_id, username, password FROM user WHERE email = ?");
     } else {
-        $stmt = $conn->prepare("SELECT * FROM user WHERE username = ?");
+        $stmt = $conn->prepare("SELECT user_id, username, password FROM user WHERE username = ?");
     }
 
     $stmt->bind_param("s", $login_input);
@@ -43,8 +43,14 @@ if (isset($_POST['login_submit'])) {
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
         if (password_verify($password, $user['password'])) {
+            // Regenerate session ID for security
+            session_regenerate_id(true);
+
+            // Store user details in session
+            $_SESSION['user_id'] = $user['user_id'];  // Store user ID
             $_SESSION['username'] = $user['username'];
             $_SESSION['toast_message'] = ["status" => "success", "message" => "Login successful!"];
+
             header("Location: dashboard.php");
             exit();
         } else {
@@ -58,17 +64,23 @@ if (isset($_POST['login_submit'])) {
     exit();
 }
 
-$query = "SELECT * FROM product WHERE status = 'available'";
-$result = $conn->query($query);
+// Fetch all available products categorized
+$normal_products = [];
+$refill_products = [];
+$rental_products = [];
 
-$products = ["refill" => [], "normal" => [], "renting" => []];
+$product_query = "SELECT * FROM product";
+$product_result = $conn->query($product_query);
 
-while ($row = $result->fetch_assoc()) {
-    $products[$row['product_type']][] = $row;
+while ($product = $product_result->fetch_assoc()) {
+    if ($product['product_type'] == 'normal') {
+        $normal_products[] = $product;
+    } elseif ($product['product_type'] == 'refill') {
+        $refill_products[] = $product;
+    } elseif ($product['product_type'] == 'renting') {
+        $rental_products[] = $product;
+    }
 }
-
-$conn->close();
-
 ?>
 
     <!DOCTYPE html>
@@ -78,7 +90,7 @@ $conn->close();
         <meta http-equiv=" X-UA-Compatible" content = "IE-edge"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jz Waters Login & Registration Form</title>
-    <link   rel = "stylesheet"  href = "style1.css"/>
+    <link   rel = "stylesheet"  href = "/css/style1.css"/>
     <link rel = "stylesheet" href = "https://unicons.iconscout.com/release/v4.0.0/css/line.css"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -205,8 +217,8 @@ $conn->close();
                         and multi-stage filtration, to guarantee that every drop is fresh, pure, and free from contaminants.
                     </p>    
                     <div class="buttons">
-                        <button type="submit" class="button-order-now">Order Now</button>
-                        <a href="#contactus" class="button-contact-us">Contact Us</a>
+                        <button type="submit" class="uil uil-clipboard-notes button-order-now" >Order Now</button>
+                        <a href="#contactus"  class="uil uil-phone button-contact-us">Contact Us</a>
                     </div>
                 </div>
                 <img src="/images/Jz.png" alt="JZ Waters Logo" class="about-logo">
@@ -214,19 +226,33 @@ $conn->close();
         
         
                         <section class="water-refill" id="products">
-                <h2>Water Refill Options</h2>
-                <div class="refill-container" id="waterRefillContainer"></div>
-            </section>
+                        <h2>Water Refills</h2>
+            <div class="product-container">
+                <?php foreach ($refill_products as $product): ?>
+                    <?php include '/xampp/htdocs/WaterRefillingSystem/php/product_card.php'; ?>
+                <?php endforeach; ?>
+                    </div>
+                 </section>
+                 
+                 <section class="rental" id="products">
+                <h2>Rental Services</h2>
+                <div class="product-container">
+                <?php foreach ($rental_products as $product): ?>
+                    <?php include '/xampp/htdocs/WaterRefillingSystem/php/rental_product_card.php'; ?>
+                <?php endforeach; ?>                                                                
+            </div>
+          </section>
 
             <section class="products" id="products">
                 <h2>Products & Accessories</h2>
-                <div class="product-container" id="productContainer"></div>
-            </section>
+                <div class="product-container">
+                <?php foreach ($normal_products as $product): ?>
+                    <?php include '/xampp/htdocs/WaterRefillingSystem/php/product_card.php'; ?>
+                <?php endforeach; ?>
+            </div> 
+          </section>
 
-            <section class="rental" id="products">
-                <h2>Rental Services</h2>
-                <div class="rental-container" id="rentalContainer"></div>
-            </section>
+      
 
             <div></div>
                     <!-- Contact Information Section -->
@@ -388,7 +414,7 @@ $conn->close();
                         formData.append("register_contact", contact.value.trim());
                         formData.append("register_password", password.value.trim());
 
-                        fetch("register1.php", {
+                        fetch("/xampp/htdocs/WaterRefillingSystem/php/register1.php", {
                         method: "POST",
                         body: new FormData(document.getElementById("signupForm")),
                     })
@@ -426,7 +452,7 @@ $conn->close();
 
 
                             document.addEventListener("DOMContentLoaded", function() {
-                            fetch("products.php")
+                            fetch("/xampp/htdocs/WaterRefillingSystem/php/products.php")
                             .then(response => response.json())
                             .then(products => {
                                 const refillContainer = document.getElementById("waterRefillContainer");
@@ -537,7 +563,7 @@ $conn->close();
 
                         $(document).ready(function () {
                             $.ajax({
-                                url: "products.php",
+                                url: "/xampp/htdocs/WaterRefillingSystem/php/products.php",
                                 type: "GET",
                                 dataType: "json",
                                 success: function (response) {
@@ -601,7 +627,23 @@ $conn->close();
                         });
                         </script>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let status = "<?php echo trim($product['status']); ?>";
+        let stock = <?php echo $product['stock']; ?>;
+        
+        let quantityInput = document.getElementById("quantity");
+        let addToCartButton = document.getElementById("add_to_cart");
 
+        if (status !== "Available" || stock < 1) {
+            quantityInput.disabled = true;
+            addToCartButton.disabled = true;
+
+            // Apply CSS class for better visual indication
+            addToCartButton.classList.add("disabled");
+        }
+    });
+</script>
            
     </body>
     </html>

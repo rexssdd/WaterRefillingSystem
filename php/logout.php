@@ -7,6 +7,6 @@ session_unset();
 session_destroy();
 
 // Redirect to login page or home page
-header("Location: /HTML/getstartedPage.php"); // Change this to your desired page
+header("Location: /USER_DASHBOARD/getstartedPage.php"); // Change this to your desired page
 exit();
 ?>
