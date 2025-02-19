@@ -16,17 +16,15 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
+          
           <li class="nav-item">
-            <a class="nav-link" href="index.html">Home</a>
+            <a class="nav-link active" href="adminproducts.html">Products</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" href="products.html">Products</a>
+            <a class="nav-link" href="adminemployee.html">Employees</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="employees.html">Employees</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="delivery.html">Delivery</a>
+            <a class="nav-link" href="deliveryteam.html">Delivery</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="orders.html">Orders</a>
@@ -45,9 +43,6 @@
   <!-- Product Management Section -->
   <div class="container mt-4">
     <h2 class="card-header">Product Management</h2>
-    <!-- Add Products Button (Triggers Modal) -->
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="resetForm()">Add New Product</button>
-
     <!-- Add/Update Product Modal -->
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -78,17 +73,10 @@
                 <label for="productDescription" class="form-label">Description</label>
                 <textarea class="form-control" id="productDescription" required></textarea>
               </div>
+            
               <div class="mb-3">
-                <label for="productImage" class="form-label">Product Image</label>
-                <input type="file" class="form-control" id="productImage" required>
-              </div>
-              <div class="mb-3">
-                <label for="productType" class="form-label">Product Type</label>
-                <select class="form-control" id="productType" required>
-                  <option value="normal">Normal Product</option>
-                  <option value="refill">Refill</option>
-                  <option value="rental">Rental</option>
-                </select>
+                
+              
               </div>
             </form>
           </div>
@@ -102,7 +90,7 @@
     </div>
 
     <!-- Product Table -->
-    <h3 class="mt-5">Product List</h3>
+
     <table class="table">
       <thead>
         <tr>
@@ -129,7 +117,6 @@
           <td>
             <button class="btn btn-warning btn-sm" onclick="editProduct(this)">Edit</button>
             <button class="btn btn-info btn-sm" onclick="updateStatus(this)">Toggle Status</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteProduct(this)">Delete</button>
           </td>
         </tr>
       </tbody>
@@ -159,6 +146,33 @@
   </div>
 
   <script>
+    
+    function addProduct() {
+      const formData = new FormData();
+      formData.append("productName", document.getElementById("productName").value);
+      formData.append("productPrice", document.getElementById("productPrice").value);
+      formData.append("productStock", document.getElementById("productStock").value);
+      formData.append("productDescription", document.getElementById("productDescription").value);
+      
+  
+      fetch("add_product.php", {
+        method: "POST",
+        body: formData,
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert("Product added successfully!");
+          location.reload(); // Refresh the page to update the product list
+        } else {
+          alert("Error: " + data.message);
+        }
+      })
+      .catch(error => console.error("Error:", error));
+    }
+  </script>
+  
+  <script>
     let currentEditRow = null;
 
     function logout() {
@@ -186,48 +200,48 @@
     }
 
     // Called when the user clicks the Add/Update Product button in the modal.
-    function addProduct() {
-      // If editing, update the existing product.
-      if (currentEditRow !== null) {
-        updateExistingProduct(currentEditRow);
-        return;
-      }
+    // function addProduct() {
+    //   // If editing, update the existing product.
+    //   if (currentEditRow !== null) {
+    //     updateExistingProduct(currentEditRow);
+    //     return;
+    //   }
       
-      // Get values from the form for a new product.
-      const code = document.getElementById('productCode').value;
-      const name = document.getElementById('productName').value;
-      const price = document.getElementById('productPrice').value;
-      const stock = document.getElementById('productStock').value;
-      const description = document.getElementById('productDescription').value;
-      const type = document.getElementById('productType').value;
+    //   // Get values from the form for a new product.
+    //   const code = document.getElementById('productCode').value;
+    //   const name = document.getElementById('productName').value;
+    //   const price = document.getElementById('productPrice').value;
+    //   const stock = document.getElementById('productStock').value;
+    //   const description = document.getElementById('productDescription').value;
+  
       
-      // Add new row to the product list.
-      const table = document.getElementById('productList');
-      const newRow = table.insertRow();
-      newRow.innerHTML = `
-        <td>${code}</td>
-        <td>${name}</td>
-        <td>₱${price}</td>
-        <td>${stock}</td>
-        <td>${description}</td>
-        <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
-        <td><span class="badge bg-success">Available</span></td>
-        <td>
-          <button class="btn btn-warning btn-sm" onclick="editProduct(this)">Edit</button>
-          <button class="btn btn-info btn-sm" onclick="updateStatus(this)">Toggle Status</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteProduct(this)">Delete</button>
-        </td>
-      `;
+    //   // Add new row to the product list.
+    //   const table = document.getElementById('productList');
+    //   const newRow = table.insertRow();
+    //   newRow.innerHTML = `
+    //     <td>${code}</td>
+    //     <td>${name}</td>
+    //     <td>₱${price}</td>
+    //     <td>${stock}</td>
+    //     <td>${description}</td>
+    //     <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
+    //     <td><span class="badge bg-success">Available</span></td>
+    //     <td>
+    //       <button class="btn btn-warning btn-sm" onclick="editProduct(this)">Edit</button>
+    //       <button class="btn btn-info btn-sm" onclick="updateStatus(this)">Toggle Status</button>
+    //       <button class="btn btn-danger btn-sm" onclick="deleteProduct(this)">Delete</button>
+    //     </td>
+    //   `;
       
-      // Show success toast.
-      const toast = new bootstrap.Toast(document.getElementById('successToast'));
-      toast.show();
+    //   // Show success toast.
+    //   const toast = new bootstrap.Toast(document.getElementById('successToast'));
+    //   toast.show();
       
-      // Reset form and close the modal.
-      resetForm();
-      const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
-      modal.hide();
-    }
+    //   // Reset form and close the modal.
+    //   resetForm();
+    //   const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+    //   modal.hide();
+    // }
 
     // Called when the Edit button is clicked.
     // Populates the modal with the product’s current details.
@@ -248,9 +262,7 @@
       document.getElementById('productPrice').value = price.replace('₱', '');
       document.getElementById('productStock').value = stock;
       document.getElementById('productDescription').value = description;
-      document.getElementById('productType').value = type;
-      // Note: For simplicity, the image file is not pre-loaded.
-      document.getElementById('productImage').value = "";
+     
       
       // Set modal title and submit button text for editing.
       document.getElementById('addProductModalLabel').textContent = 'Edit Product';

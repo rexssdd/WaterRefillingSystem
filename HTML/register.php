@@ -1,52 +1,111 @@
 <?php
-// Database connection
-$servername = "localhost"; // Update with your server details
-$username = "root"; // Update with your database username
-$password = ""; // Update with your database password
-$dbname = "waterrefillingdatabase"; // Update with your database name
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+header('Content-Type: application/json'); // Ensure JSON response
+
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "wrsystem";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Check connection
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    $_SESSION['toast_message'] = ["status" => "error", "message" => "Connection failed: " . $conn->connect_error];
+    header("Location: getstartedPage.php");
+    exit();
 }
 
-// Handling the form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Getting form data
-    $username = $_POST['username'];
-    $email = $_POST['email'];
-    $contact_number = $_POST['contact'];
-    $password = $_POST['password'];
-    $confirmPassword = $_POST['confirmPassword'];
+// Handle Registration
+if (isset($_POST['register_submit'])) {
+    $username = trim($_POST['register_username']);
+    $email = trim($_POST['register_email']);
+    $contact = trim($_POST['register_contact']);
+    $password = $_POST['register_password'];
+    $confirm_password = $_POST['register_confirm_password'];
 
-    // Check if the password and confirm password match
-    if ($password !== $confirmPassword) {
-        echo "Passwords do not match. Please try again.";
-    } else {
-        // Hash the password before storing it in the database
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-        // Get the current date for registration
-        $registration_date = date('Y-m-d');
-
-        // Prepare the SQL statement to insert data into the database
-        $stmt = $conn->prepare("INSERT INTO `user` (`username`, `password`, `email`, `contact_number`, `registration_date`) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $username, $hashedPassword, $email, $contact_number, $registration_date);
-
-        // Execute the query
-        if ($stmt->execute()) {
-            echo "Registration successful!";
-        } else {
-            echo "Error: " . $stmt->error;
-        }
-
-        // Close the statement and connection
-        $stmt->close();
+    // Validate input fields
+    if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
+        $_SESSION['toast_message'] = ["status" => "error", "message" => "All fields are required."];
+        header("Location: getstartedPage.php");
+        exit();
     }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['toast_message'] = ["status" => "error", "message" => "Invalid email format."];
+        header("Location: getstartedPage.php");
+        exit();
+    }
+
+    if ($password !== $confirm_password) {
+        $_SESSION['toast_message'] = ["status" => "error", "message" => "Passwords do not match."];
+        header("Location: getstartedPage.php");
+        exit();
+    }
+
+    // Check if username or email already exists
+    $stmt = $conn->prepare("SELECT * FROM user WHERE username = ? OR email = ?");
+    $stmt->bind_param("ss", $username, $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $_SESSION['toast_message'] = ["status" => "error", "message" => "Username or email already taken."];
+        header("Location: getstartedPage.php");
+        exit();
+    }
+
+    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+
+    $stmt = $conn->prepare("INSERT INTO user (username, password, email, contact_number) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssss", $username, $hashed_password, $email, $contact);
+
+    if ($stmt->execute()) {
+        $_SESSION['toast_message'] = ["status" => "success", "message" => "Registration successful!"];
+    } else {
+        $_SESSION['toast_message'] = ["status" => "error", "message" => "Error: " . $stmt->error];
+    }
+    header("Location: getstartedPage.php");
+    exit();
 }
 
-// Close the database connection
+// Handle Login
+if (isset($_POST['login_submit'])) {
+    $login_input = trim($_POST['login_email_or_username']);
+    $password = $_POST['login_password'];
+
+    if (empty($login_input) || empty($password)) {
+        $_SESSION['toast_message'] = ["status" => "error", "message" => "Please enter both username/email and password."];
+        header("Location: getstartedPage.php");
+        exit();
+    }
+
+    if (filter_var($login_input, FILTER_VALIDATE_EMAIL)) {
+        $stmt = $conn->prepare("SELECT * FROM user WHERE email = ?");
+    } else {
+        $stmt = $conn->prepare("SELECT * FROM user WHERE username = ?");
+    }
+    
+    $stmt->bind_param("s", $login_input);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['username'] = $user['username'];
+            header("Location: dashboard.html");
+            exit();
+        } else {
+            $_SESSION['toast_message'] = ["status" => "error", "message" => "Invalid password."];
+        }
+    } else {
+        $_SESSION['toast_message'] = ["status" => "error", "message" => "User not found."];
+    }
+    header("Location: getstartedPage.php");
+    exit();
+}
+
 $conn->close();
 ?>

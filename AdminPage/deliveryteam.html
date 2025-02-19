@@ -37,11 +37,37 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Delivery Team Dashboard</a>
-            <div class="ms-auto">
-                <a href="#" class="btn btn-light">Logout</a>
+            <a class="navbar-brand" href="#">Water Refilling System Admin</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="adminproducts.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="adminproducts.html">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="adminemployee.html">Employees</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="deliveryteam.html">Delivery</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="orders.html">Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="sales.html">Sales Tracking</a>
+                    </li>
+                    <li class="nav-item ms-auto">
+                        <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>

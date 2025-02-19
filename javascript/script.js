@@ -1,91 +1,6 @@
 
 
-// signup scriptss
-document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("signupForm");
-    const username = document.getElementById("username");
-    const email = document.getElementById("email");
-    const contact = document.getElementById("contact");
-    const password = document.getElementById("password");
-    const confirmPassword = document.getElementById("confirmPassword");
-
-    const errors = {
-        username: document.getElementById("usernameError"),
-        email: document.getElementById("emailError"),
-        contact: document.getElementById("contactError"),
-        password: document.getElementById("passwordError"),
-        confirmPassword: document.getElementById("confirmPasswordError")
-    };
-
-    function hideError(field) {
-        errors[field].textContent = "";
-        errors[field].style.display = "none";
-    }
-
-    function showError(field, message) {
-        errors[field].textContent = message;
-        errors[field].style.display = "block";
-    }
-
-    contact.addEventListener("input", function () {
-        this.value = this.value.replace(/\D/g, ""); // Allow only numbers
-        if (/^\d{11}$/.test(this.value)) hideError("contact");
-    });
-
-    email.addEventListener("input", function () {
-        if (validateGmail(this.value)) hideError("email");
-    });
-
-    password.addEventListener("input", function () {
-        if (this.value.length >= 6) hideError("password");
-    });
-
-    confirmPassword.addEventListener("input", function () {
-        if (password.value === confirmPassword.value) hideError("confirmPassword");
-    });
-
-    form.addEventListener("submit", function (event) {
-        event.preventDefault();
-        let valid = true;
-
-        Object.values(errors).forEach(error => hideError(error));
-
-        if (username.value.trim() === "") {
-            showError("username", "Username is required");
-            valid = false;
-        }
-
-        if (!validateGmail(email.value)) {
-            showError("email", "Email must be a valid @gmail.com address");
-            valid = false;
-        }
-
-        if (!/^\d{11}$/.test(contact.value)) {
-            showError("contact", "Contact number must be exactly 11 digits");
-            valid = false;
-        }
-
-        if (password.value.length < 6) {
-            showError("password", "Password must be at least 6 characters");
-            valid = false;
-        }
-
-        if (password.value !== confirmPassword.value) {
-            showError("confirmPassword", "Passwords do not match!");
-            valid = false;
-        }
-
-        if (valid) {
-            alert("Signup successful!");
-            form.submit();
-        }
-    });
-
-    function validateGmail(email) {
-        return /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email);
-    }
-});
-
+  
 const formOpenBtn = document.querySelector("#form-open"),
 home = document.querySelector(".home"),
 formContainer = document.querySelector(".form_container"),
@@ -118,3 +33,24 @@ loginBtn.addEventListener("click", (e)=> {
     formContainer.classList.remove("active");
 });
 
+//cart 
+
+function fetchCartCount() {
+    fetch('fetch_cart_count.php')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('cart-count').innerText = data.cart_count;
+    })
+    .catch(error => console.error('Error fetching cart count:', error));
+}
+
+// Fetch cart count when the page loads
+document.addEventListener("DOMContentLoaded", fetchCartCount);
+function updateCartCount(count) {
+    document.getElementById('cart-count').innerText = count;
+}
+
+        function confirmLogout() {
+         var logoutModal = new bootstrap.Modal(document.getElementById("logoutModal"));
+         logoutModal.show();
+            }
