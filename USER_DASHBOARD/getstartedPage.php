@@ -109,7 +109,7 @@ while ($product = $product_result->fetch_assoc()) {
                     <a href="#home" class="nav_link">Home</a>
                     <a href="#products" class="nav_link">Products</a>
                     <a href="#contactus" class="nav_link">Contact Us</a>
-                    <a href="#developers" class="nav_link">Developers</a>
+                    <a href="#developers" class="nav_link">Organizational Structure</a>
                 </li>
             </ul>
             <button class = "button" id = "form-open">Login</button>
@@ -276,7 +276,7 @@ while ($product = $product_result->fetch_assoc()) {
 
                     <!-- Developers Section -->
                     <section class="developers" id="developers">
-                        <h2>Meet the Developers</h2>
+                        <h2>Organizational Structure</h2>
                         <div class="dev-container">
                             <div class="developer">
                                 <img src="/images/(6) REX.jpg" alt="Developer 1">

@@ -14,7 +14,10 @@ if ($conn->connect_error) {
 }
 
 // Fetch employee data
-$sql = "SELECT employee_id, name, position, salary, status FROM employees";
+$sql = "SELECT e.employee_id, e.name, e.position, e.salary, e.status, ed.email, ed.contact_number
+        FROM employees e
+        LEFT JOIN employee_data ed ON e.employee_id = ed.employee_id";
+
 $result = $conn->query($sql);
 ?>
 
@@ -24,6 +27,8 @@ $result = $conn->query($sql);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employees</title>
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
@@ -66,58 +71,124 @@ $result = $conn->query($sql);
     <div class="container mt-4">
         <h2 class="card-header">Employee Management</h2>
         <p>Manage employees here.</p>
+   <!-- Add Employee Button -->
+   <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">Add Employee</button>
 
         <!-- Employee Table -->
         <div class="card mt-4">
             <div class="card-body">
                 <h4>Employee List</h4>
                 <table class="table table-striped" id="employee-table">
-                    <thead>
-                        <tr>
-                            <th>Employee ID</th>
-                            <th>Name</th>
-                            <th>Position</th>
-                            <th>Salary</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="employee-list">
-                        <!-- Dynamically load employee data -->
-                        <?php
-                        if ($result->num_rows > 0) {
-                            // Output each employee
-                            while($row = $result->fetch_assoc()) {
-                                echo "<tr data-id='" . $row["employee_id"] . "'>";
-                                echo "<td>" . $row["employee_id"] . "</td>";
-                                echo "<td>" . $row["name"] . "</td>";
-                                echo "<td>" . $row["position"] . "</td>";
-                                echo "<td>₱" . number_format($row["salary"], 2) . "</td>";
-                                echo "<td>";
-                                // Toggle button for status
-                                $status_class = ($row["status"] == 'Active') ? 'btn-success' : 'btn-danger';
-                                $status_text = ucfirst($row["status"]);
-                                echo "<button class='btn " . $status_class . " btn-sm' onclick='toggleStatus(" . $row["employee_id"] . ", \"" . $row["status"] . "\")'>" . $status_text . "</button>";
-                                echo "</td>";
-                                echo "<td>";
-                                echo "<button class='btn btn-warning btn-sm' onclick='editEmployee(" . $row["employee_id"] . ")'>Edit</button>";
-                                echo "<button class='btn btn-danger btn-sm' onclick='deleteEmployee(" . $row["employee_id"] . ")'>Delete</button>";
-                                echo "</td>";
-                                echo "</tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='6'>No employees found</td></tr>";
-                        }
-                        $conn->close();
-                        ?>
-                    </tbody>
+                <thead>
+    <tr>
+        <th>Employee ID</th>
+        <th>Name</th>
+        <th>Position</th>
+        <th>Salary</th>
+        <th>Email</th>
+        <th>Contact Number</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+<tbody id="employee-list">
+    <?php
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            echo "<tr data-id='" . $row["employee_id"] . "'>";
+            echo "<td>" . $row["employee_id"] . "</td>";
+            echo "<td>" . $row["name"] . "</td>";
+            echo "<td>" . $row["position"] . "</td>";
+            echo "<td>₱" . number_format($row["salary"], 2) . "</td>";
+            echo "<td>" . $row["email"] . "</td>";
+            echo "<td>" . $row["contact_number"] . "</td>";
+            echo "<td>";
+            $status_class = ($row["status"] == 'Active') ? 'btn-success' : 'btn-danger';
+            echo "<button class='btn " . $status_class . " btn-sm' onclick='toggleStatus(" . $row["employee_id"] . ", \"" . $row["status"] . "\")'>" . ucfirst($row["status"]) . "</button>";
+            echo "</td>";
+            echo "<td>";
+            echo "<button class='btn btn-warning btn-sm' onclick='editEmployee(" . $row["employee_id"] . ")'>Edit</button>";
+            echo "<button class='btn btn-danger btn-sm' onclick='deleteEmployee(" . $row["employee_id"] . ")'>Delete</button>";
+            echo "</td>";
+            echo "</tr>";
+        }
+    } else {
+        echo "<tr><td colspan='8'>No employees found</td></tr>";
+    }
+    ?>
+</tbody>
+
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Edit Employee Modal -->
-    <!-- Edit Employee Modal -->
+        <!-- Add Employee Modal -->
+        <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addEmployeeModalLabel">Add Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addEmployeeForm">
+                        <div class="mb-3">
+                            <label for="employee-name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="employee-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employee-position" class="form-label">Position</label>
+                            <select class="form-select" id="employee-position" required>
+                                <option value="Manager">Manager</option>
+                                <option value="Sales">Sales</option>
+                                <option value="Technician">Technician</option>
+                                <option value="Clerk">Clerk</option>
+                                <option value="Driver">Driver</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employee-salary" class="form-label">Salary</label>
+                            <input type="number" class="form-control" id="employee-salary" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employee-status" class="form-label">Status</label>
+                            <select class="form-select" id="employee-status" required>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <hr>
+                        <h5>Account Registration</h5>
+                        <div class="mb-3">
+                            <label for="employee-username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="employee-username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employee-email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="employee-email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employee-contact" class="form-label">Contact Number</label>
+                            <input type="text" class="form-control" id="employee-contact" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="employee-password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="employee-password" required>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="addEmployee()">Add Employee</button>
+                </div>
+            </div>
+        </div>
+</div>
+
+   <!-- Edit Employee Modal -->
 <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -128,16 +199,16 @@ $result = $conn->query($sql);
             <div class="modal-body">
                 <form id="editEmployeeForm">
                     <div class="mb-3">
-                        <label for="employee-id" class="form-label">Employee ID</label>
-                        <input type="text" class="form-control" id="employee-id" disabled>
+                        <label for="edit-employee-id" class="form-label">Employee ID</label>
+                        <input type="text" class="form-control" id="edit-employee-id" disabled>
                     </div>
                     <div class="mb-3">
-                        <label for="employee-name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="employee-name">
+                        <label for="edit-employee-name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="edit-employee-name">
                     </div>
                     <div class="mb-3">
-                        <label for="employee-position" class="form-label">Position</label>
-                        <select class="form-select" id="employee-position">
+                        <label for="edit-employee-position" class="form-label">Position</label>
+                        <select class="form-select" id="edit-employee-position">
                             <option value="Manager">Manager</option>
                             <option value="Sales">Sales</option>
                             <option value="Technician">Technician</option>
@@ -146,8 +217,16 @@ $result = $conn->query($sql);
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="employee-salary" class="form-label">Salary</label>
-                        <input type="number" class="form-control" id="employee-salary">
+                        <label for="edit-employee-salary" class="form-label">Salary</label>
+                        <input type="number" class="form-control" id="edit-employee-salary">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-employee-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit-employee-email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-employee-contact" class="form-label">Contact Number</label>
+                        <input type="text" class="form-control" id="edit-employee-contact">
                     </div>
                 </form>
             </div>
@@ -158,8 +237,6 @@ $result = $conn->query($sql);
         </div>
     </div>
 </div>
-
-    </div>
 
     <script>
         // Logout function
@@ -185,60 +262,100 @@ $result = $conn->query($sql);
             xhr.onload = function() {
                 if (xhr.status === 200) {
                     console.log(`Status updated for Employee ID ${id} to ${newStatus}`);
+                    location.reload();
                 } else {
                     alert("Error updating status. Please try again.");
                     // Revert button UI changes
                     statusButton.textContent = currentStatus;
                     statusButton.classList.toggle('btn-success');
                     statusButton.classList.toggle('btn-danger');
+                    
                 }
             };
             xhr.send("employee_id=" + id + "&status=" + newStatus);
         }
 
-        // Edit employee function
-function editEmployee(id) {
-    const employeeRow = document.querySelector(`#employee-table tr[data-id="${id}"]`);
-    const name = employeeRow.children[1].textContent;
-    const position = employeeRow.children[2].textContent;
-    const salary = employeeRow.children[3].textContent.replace('₱', '');
-
-    // Populate the modal with employee data (no status)
-    document.getElementById('employee-id').value = id;
-    document.getElementById('employee-name').value = name;
-    document.getElementById('employee-position').value = position;
-    document.getElementById('employee-salary').value = salary;
-
-    // Show the modal
-    new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
-}
-
-       // Save changes made to the employee in the modal
-function saveEmployeeChanges() {
-    const id = document.getElementById('employee-id').value;
-    const name = document.getElementById('employee-name').value;
-    const position = document.getElementById('employee-position').value;
-    const salary = document.getElementById('employee-salary').value;
-    
-    // Since we removed the status field, do not reference it
-    // const status = document.getElementById('employee-status').value;  // Remove this line
-
-    // Send the updated data to the server using AJAX
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "update_employee.php", true);
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.onload = function() {
-        if (xhr.status === 200) {
-            alert('Employee updated successfully!');
-            // Reload the page or update the table dynamically with the new data
-            window.location.reload();
-        } else {
-            alert("Error updating employee. Please try again.");
+   // Edit employee function
+   function editEmployee(id) {
+        const employeeRow = document.querySelector(`#employee-table tr[data-id="${id}"]`);
+        
+        if (!employeeRow) {
+            alert("Employee row not found.");
+            return;
         }
-    };
-    // Send the updated data without the status
-    xhr.send(`employee_id=${id}&name=${name}&position=${position}&salary=${salary}`);
-}
+
+        const name = employeeRow.children[1].textContent.trim();
+        const position = employeeRow.children[2].textContent.trim();
+        const salary = employeeRow.children[3].textContent.replace(/[^\d.]/g, '').trim();
+        const email = employeeRow.children[4].textContent.trim();
+        const contact = employeeRow.children[5].textContent.trim();
+
+        // Populate modal fields with employee data
+        document.getElementById('edit-employee-id').value = id;
+        document.getElementById('edit-employee-name').value = name;
+        document.getElementById('edit-employee-position').value = position;
+        document.getElementById('edit-employee-salary').value = salary;
+        document.getElementById('edit-employee-email').value = email;
+        document.getElementById('edit-employee-contact').value = contact;
+
+        // Show the modal
+        new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
+    }
+
+    // Save employee changes function
+    function saveEmployeeChanges() {
+        const id = document.getElementById('edit-employee-id').value;
+        const name = document.getElementById('edit-employee-name').value.trim();
+        const position = document.getElementById('edit-employee-position').value;
+        const salary = document.getElementById('edit-employee-salary').value.trim();
+        const email = document.getElementById('edit-employee-email').value.trim();
+        const contact = document.getElementById('edit-employee-contact').value.trim();
+
+        // Validate input fields
+        if (!id || !name || !position || !salary || !email || !contact) {
+            alert("Please fill in all fields.");
+            return;
+        }
+
+        // Validate email format
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+            alert("Invalid email format.");
+            return;
+        }
+
+        // Validate salary
+        if (isNaN(salary) || parseFloat(salary) <= 0) {
+            alert("Invalid salary amount.");
+            return;
+        }
+
+        // Send data via AJAX
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "update_employee.php", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        alert(response.message);
+                        window.location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                } catch (e) {
+                    alert("Unexpected server response.");
+                }
+            } else {
+                alert("Error updating employee. Please try again.");
+            }
+        };
+
+        // Send updated data
+        const params = `employee_id=${id}&name=${encodeURIComponent(name)}&position=${encodeURIComponent(position)}&salary=${salary}&email=${encodeURIComponent(email)}&contact_number=${encodeURIComponent(contact)}`;
+        xhr.send(params);
+    }
 
 
         // Delete employee function
@@ -255,6 +372,29 @@ function saveEmployeeChanges() {
                 }
             };
             xhr.send("employee_id=" + id);
+        }
+
+
+        function addEmployee() {
+            const name = document.getElementById("employee-name").value;
+            const position = document.getElementById("employee-position").value;
+            const salary = document.getElementById("employee-salary").value;
+            const status = document.getElementById("employee-status").value;
+            const username = document.getElementById("employee-username").value;
+            const password = document.getElementById("employee-password").value;
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "add_employee.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    alert("Employee added successfully!");
+                    location.reload();
+                } else {
+                    alert("Error adding employee.");
+                }
+            };
+            xhr.send(`name=${name}&position=${position}&salary=${salary}&status=${status}&username=${username}&password=${password}`);
         }
     </script>
 

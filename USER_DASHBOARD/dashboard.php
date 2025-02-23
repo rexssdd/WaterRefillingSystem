@@ -77,7 +77,7 @@ $cart_count = $cart_data['total_items'] ?? 0;
 // Handle logout
 if (isset($_GET['logout'])) {
     session_destroy();
-    header('Location: login.php');
+    header('Location: getstarted.php');
 }
 ?>
 

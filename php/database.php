@@ -73,28 +73,6 @@ CREATE TABLE transaction (
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
--- Personnel Table
-CREATE TABLE `employee_data` (
-    `employee_id` INT(11) NOT NULL AUTO_INCREMENT,
-    `username` VARCHAR(50) NOT NULL,
-    `password` VARCHAR(255) NOT NULL,
-    `email` VARCHAR(100) DEFAULT NULL,
-    `contact_number` VARCHAR(20) DEFAULT NULL,
-    `position` VARCHAR(50) NOT NULL,
-    `registration_date` DATE DEFAULT CURDATE(),
-    PRIMARY KEY (`employee_id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
-CREATE TABLE `employees` (
-    `employee_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(100) NOT NULL,
-    `position` VARCHAR(50) NOT NULL,
-    `salary` DECIMAL(10, 2) NOT NULL,
-    `status` ENUM('Active', 'Inactive') DEFAULT 'Active',
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
 
 -- Delivery Login Table
 CREATE TABLE delivery_login (
@@ -132,6 +110,66 @@ CREATE TABLE sales (
     FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE, -- Linking to user
     FOREIGN KEY (product_id) REFERENCES product(product_id) ON DELETE CASCADE -- Linking to product
 );
+
+CREATE TABLE `inventory_price_logs` (
+    `log_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `admin_id` INT(11) NOT NULL,
+    `product_id` INT(11) NOT NULL,
+    `old_price` DECIMAL(10,2) NOT NULL,
+    `new_price` DECIMAL(10,2) NOT NULL,
+    `change_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`log_id`),
+    FOREIGN KEY (`admin_id`) REFERENCES `admin`(`admin_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (`product_id`) REFERENCES `product`(`product_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+ALTER TABLE inventory_price_logs ADD COLUMN log_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+CREATE TABLE `employees` (
+    `employee_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(100) NOT NULL,
+    `position` VARCHAR(50) NOT NULL,
+    `salary` DECIMAL(10,2) NOT NULL,
+    `status` ENUM('Active', 'Inactive') DEFAULT 'Active',
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`employee_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `employee_data` (
+    `personnel_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `username` VARCHAR(50) NOT NULL,
+    `password` VARCHAR(255) NOT NULL,
+    `email` VARCHAR(100) DEFAULT NULL,
+    `contact_number` VARCHAR(20) DEFAULT NULL,
+    `position` VARCHAR(50) NOT NULL,
+    `registration_date` DATE DEFAULT CURDATE(),
+    `employee_id` INT(11) NOT NULL,
+    PRIMARY KEY (`personnel_id`),
+    KEY `FK_employee_id` (`employee_id`),
+    CONSTRAINT `FK_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `employee_modification_logs` (
+    `log_id` INT(11) NOT NULL AUTO_INCREMENT,
+    `admin_id` INT(11) NOT NULL,
+    `employee_id` INT(11) NOT NULL,
+    `old_salary` DECIMAL(10,2) DEFAULT NULL,
+    `new_salary` DECIMAL(10,2) DEFAULT NULL,
+    `old_position` VARCHAR(100) DEFAULT NULL,
+    `new_position` VARCHAR(100) DEFAULT NULL,
+    `old_email` VARCHAR(100) DEFAULT NULL,
+    `new_email` VARCHAR(100) DEFAULT NULL,
+    `old_contact` VARCHAR(20) DEFAULT NULL,
+    `new_contact` VARCHAR(20) DEFAULT NULL,
+    `modification_type` VARCHAR(255) NOT NULL,
+    `modified_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`log_id`),
+    KEY `admin_id` (`admin_id`),
+    KEY `employee_id` (`employee_id`),
+    CONSTRAINT `employee_modification_logs_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`admin_id`) ON DELETE CASCADE,
+    CONSTRAINT `employee_modification_logs_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 CREATE TABLE damage_reports (
     damage_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -293,3 +331,16 @@ END;
 //
 
 DELIMITER ;
+
+INSERT INTO orders (user_id, order_date, product_id, quantity, total, status) VALUES
+(3, CURDATE(), 1, 2, 100.00, 'pending'),
+(3, CURDATE(), 2, 1, 100.00, 'pending'),
+(3, CURDATE(), 3, 1, 2500.00, 'pending');
+
+INSERT INTO sales (user_id, product_id, quantity, sale_amount, payment_method, profit, loss, roi)
+VALUES
+    (3, 2, 3, 450.00, 'cash on delivery', 150.00, 0.00, 20.00),
+    (3, 3, 1, 150.00, 'gcash', 50.00, 0.00, 25.00),
+    (4, 1, 2, 300.00, 'walk-in', 100.00, 0.00, 18.50),
+    (4, 4, 5, 750.00, 'cash on delivery', 250.00, 0.00, 22.00),
+    (5, 5, 2, 500.00, 'gcash', 175.00, 0.00, 19.00);

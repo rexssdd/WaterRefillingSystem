@@ -1,11 +1,20 @@
 
-<?php session_start(); 
+<?php
 
-$mysqli = new mysqli("localhost", "root", "", "wrsystem");
-if ($mysqli->connect_error) {
-    die("Connection failed: " . $mysqli->connect_error);
+session_start(); 
+
+if (!isset($_SESSION['admin_id'])) {
+  die("Error: Admin ID is missing.");
 }
+$admin_id = $_SESSION['admin_id'];
 
+
+
+// Handle logout
+if (isset($_GET['logout'])) {
+  session_destroy();
+  header('Location: getstarted.php');
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -34,7 +43,7 @@ if ($mysqli->connect_error) {
           <li class="nav-item"><a class="nav-link" href="sales.html">Sales Tracking</a></li>
         </ul>
         <div class="ms-auto">
-          <button class="btn btn-danger" onclick="logout()">Logout</button>
+           <a  href="/php/logout.php" class="btn btn-danger" onclick="confirmLogout()">Logout</a>
         </div>
       </div>
     </div>
@@ -147,6 +156,11 @@ if ($mysqli->connect_error) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
+    
+    function confirmLogout() {
+         var logoutModal = new bootstrap.Modal(document.getElementById("logoutModal"));
+         logoutModal.show();
+            }
     function addStock(productId) {
       document.getElementById("productIdForStock").value = productId;
       new bootstrap.Modal(document.getElementById("addStockModal")).show();
@@ -199,23 +213,33 @@ if ($mysqli->connect_error) {
         event.preventDefault(); // Prevent form submission
         
         const productId = document.getElementById("productIdForPrice").value;
-        const newPrice = document.getElementById("newPrice").value; // Corrected ID
+        const newPrice = document.getElementById("newPrice").value;
 
         if (!productId || !newPrice || isNaN(newPrice) || newPrice <= 0) {
             alert("Please enter a valid price and select a product.");
             return;
         }
 
-        console.log("Sending Data: ", { product_id: productId, new_price: newPrice });
+        console.log("Sending Data:", `product_id=${productId}&new_price=${newPrice}`);
 
         fetch('update_price.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `product_id=${encodeURIComponent(productId)}&new_price=${encodeURIComponent(newPrice)}`
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `product_id=${productId}&new_price=${newPrice}`
         })
-        .then(response => response.json())
+        .then(response => response.text())  // Get text first
+        .then(text => {
+            console.log("Raw Response:", text); 
+            try {
+                return JSON.parse(text);  // Try to parse manually
+            } catch (error) {
+                throw new Error("Invalid JSON response: " + text);
+            }
+        })
         .then(data => {
-            console.log("Response Data:", data);
+            console.log("Parsed JSON:", data);
             if (data.success) {
                 alert("Price updated successfully!");
                 location.reload();
@@ -223,9 +247,10 @@ if ($mysqli->connect_error) {
                 alert("Error: " + data.message);
             }
         })
-        .catch(error => console.error("Fetch Error:", error));
+        .catch(error => console.error("Fetch Error:", error));  // Only one catch here
     });
 });
+
   </script>
 
 </body>

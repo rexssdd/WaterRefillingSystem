@@ -1,5 +1,5 @@
 Array
 (
     [product_id] => 1
-    [new_price] => 22.00
+    [new_price] => 23.00
 )

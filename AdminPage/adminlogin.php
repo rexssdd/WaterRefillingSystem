@@ -1,9 +1,12 @@
 <?php
 session_start();
-$mysqli = new mysqli("localhost", "root", "", "wrsystem");
-if ($mysqli->connect_error) {
-    die("Connection failed: " . $mysqli->connect_error);
+$_SESSION['admin_logged_in'] = true;  // Add this line after successful login
+
+include_once('/xampp/htdocs/WaterRefillingSystem/php/dbconnect.php');
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
+
 
 // Handle registration
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
@@ -21,16 +24,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
 
 // Handle login
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
-    $username = $mysqli->real_escape_string($_POST['username']);
+    $username = $conn->real_escape_string($_POST['username']);
     $password = $_POST['password'];
     
-    $result = $mysqli->query("SELECT * FROM admin WHERE username='$username'");
+    $result = $conn->query("SELECT * FROM admin WHERE username='$username'");
     
     if ($result->num_rows > 0) {
         $admin = $result->fetch_assoc();
         if (password_verify($password, $admin['password'])) {
-            $_SESSION['admin_id'] = $admin['admin_id'];
-            header("Location: adminproducts.php");
+            $_SESSION['admin_id'] = $admin['admin_id']; // Store admin ID
+            header("Location: orders.php   ");
             exit();
         } else {
             echo "<script>alert('Invalid credentials');</script>";
@@ -38,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
     } else {
         echo "<script>alert('User not found');</script>";
     }
+    
 }
 ?>
 <!DOCTYPE html>
