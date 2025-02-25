@@ -1,12 +1,11 @@
 <?php
-include_once('/xampp/htdocs/WaterRefillingSystem/php/adminlogin.php');
-
+include_once('/xampp/htdocs/WaterRefillingSystem/php/dbconnect.php');
 header('Content-Type: application/json');
 
 $sql = "SELECT o.order_id, u.username AS customer_name, o.status 
         FROM orders o
         LEFT JOIN user u ON o.user_id = u.user_id
-        WHERE o.status = 'delivery'";
+        WHERE o.status = 'to deliver'";
 
 $result = $conn->query($sql);
 

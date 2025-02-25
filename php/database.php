@@ -221,6 +221,23 @@ END;
 
 DELIMITER ;
 
+DELIMITER $$
+
+CREATE PROCEDURE UpdateOrderStatus(IN orderId INT)
+BEGIN
+    -- Set status to 'preparing'
+    UPDATE orders SET status = 'preparing' WHERE order_id = orderId;
+
+    -- Wait for 20 seconds
+    DO SLEEP(20);
+
+    -- Update status to 'to deliver'
+    UPDATE orders SET status = 'to deliver' WHERE order_id = orderId;
+END $$
+
+DELIMITER ;
+
+
 
 CREATE TABLE `rental_orders` (
     `rental_id` INT AUTO_INCREMENT PRIMARY KEY,

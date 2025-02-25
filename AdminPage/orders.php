@@ -37,10 +37,13 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Order ID</th>
-                                    <th>Customer</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Payment Status</th>
+                                <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="pending-orders">
@@ -59,7 +62,9 @@
                                 <tr>
                                     <th>Order ID</th>
                                     <th>Customer</th>
+                                    <th>Amount</th>
                                     <th>Status</th>
+                                    
                                 </tr>
                             </thead>
                             <tbody id="preparing-orders">
@@ -70,8 +75,32 @@
                 </div>
             </div>
         </div>
-
-        <div class="row mt-4">
+    <div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Delivery Orders</div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Amount</th>
+                      <th>Payment Method</th>
+                        <th>Payment Status</th>
+                        <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="delivery-orders">
+                        <!-- Orders to deliver will be displayed here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">Completed & Cancelled Orders</div>
@@ -79,9 +108,13 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Order ID</th>
-                                    <th>Customer</th>
-                                    <th>Status</th>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Payment Status</th>
+                                <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="completed-cancelled-orders">
@@ -93,8 +126,58 @@
             </div>
         </div>
     </div>
-
     <script>
+
+async function fetchOrders() {
+    try {
+        const response = await fetch('fetch_orders.php');
+        const orders = await response.json();
+
+        const pendingOrders = document.getElementById('pending-orders');
+        const preparingOrders = document.getElementById('preparing-orders');
+        const deliveryOrders = document.getElementById('delivery-orders');
+        const completedCancelled = document.getElementById('completed-cancelled-orders');
+        
+        // Clear previous data
+        pendingOrders.innerHTML = '';
+        preparingOrders.innerHTML = '';
+        deliveryOrders.innerHTML = '';
+        completedCancelled.innerHTML = '';
+
+        orders.forEach(order => {
+            const row = `
+                <tr>
+                    <td>${order.order_id}</td>
+                    <td>${order.customer_name || 'Guest'}</td>
+                    <td>${order.status}</td>
+                    <td>${order.payment_status || 'unpaid'}</td>
+                    <td>${order.amount || '0.00'}</td>
+                    <td>${order.payment_method || 'N/A'}</td>
+                    ${
+                        order.status === 'pending'
+                            ? `<td><button class="btn btn-success btn-sm" onclick="acceptOrder(${order.order_id})">Accept</button></td>`
+                            : '<td>-</td>'
+                    }
+                </tr>
+            `;
+
+            if (order.status === 'pending') {
+                pendingOrders.innerHTML += row;
+            } else if (order.status === 'preparing') {
+                preparingOrders.innerHTML += row;
+            } else if (order.status === 'to deliver') {
+                deliveryOrders.innerHTML += row;
+            } else if (['completed', 'cancelled', 'failed'].includes(order.status)) {
+                completedCancelled.innerHTML += row;
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", fetchOrders);
+
         async function fetchOrders() {
             try {
                 const response = await fetch('fetch_orders.php');
@@ -102,10 +185,12 @@
 
                 const pendingOrders = document.getElementById('pending-orders');
                 const preparingOrders = document.getElementById('preparing-orders');
+                const deliveryOrders = document.getElementById('delivery-orders');
                 const completedCancelled = document.getElementById('completed-cancelled-orders');
                 
                 pendingOrders.innerHTML = '';
                 preparingOrders.innerHTML = '';
+                deliveryOrders.innerHTML = '';
                 completedCancelled.innerHTML = '';
 
                 orders.forEach(order => {
@@ -114,6 +199,9 @@
                             <td>${order.order_id}</td>
                             <td>${order.customer_name || 'Guest'}</td>
                             <td>${order.status}</td>
+                             <td>${order.amount || '0.00'}</td>
+                              <td>${order.payment_method || 'N/A'}</td>
+                             <td>${order.payment_status || 'unpaid'}</td>
                             ${order.status === 'pending' ? `<td><button class="btn btn-success btn-sm" onclick="acceptOrder(${order.order_id})">Accept</button></td>` : '<td>-</td>'}
                         </tr>
                     `;
@@ -122,6 +210,8 @@
                         pendingOrders.innerHTML += row;
                     } else if (order.status === 'preparing') {
                         preparingOrders.innerHTML += row;
+                    } else if (order.status === 'to deliver') {
+                          deliveryOrders.innerHTML += row;
                     } else if (['completed', 'cancelled', 'failed'].includes(order.status)) {
                         completedCancelled.innerHTML += row;
                     }
@@ -144,8 +234,8 @@
         const result = await response.json();
 
         if (result.success) {
-            alert("Order Accepted! Status updated to Preparing.");
-            fetchOrders(); // Refresh orders table
+            alert("Order Accepted! Status will auto-update to 'To Deliver' after 5 seconds.");
+            fetchOrders(); // Refresh order list
         } else {
             alert("Error: " + result.error);
         }
@@ -153,6 +243,7 @@
         console.error("Error accepting order:", error);
     }
 }
+
 
 </script>
 
