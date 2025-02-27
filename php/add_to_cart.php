@@ -44,7 +44,8 @@ if ($result->num_rows > 0) {
     $insert_cart->execute();
     $insert_cart->close();
 }
-
+    
+header("location: /user_dashboard/dashboard.php");
 echo json_encode(['success' => 'Item added to cart successfully!']);
 exit;
 ?>

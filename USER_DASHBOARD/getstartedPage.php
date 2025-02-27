@@ -414,7 +414,7 @@ while ($product = $product_result->fetch_assoc()) {
                         formData.append("register_contact", contact.value.trim());
                         formData.append("register_password", password.value.trim());
 
-                        fetch("/xampp/htdocs/WaterRefillingSystem/php/register1.php", {
+                        fetch("/php/register1.php", {
                         method: "POST",
                         body: new FormData(document.getElementById("signupForm")),
                     })

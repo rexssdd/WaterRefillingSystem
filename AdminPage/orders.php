@@ -64,7 +64,9 @@
                                     <th>Customer</th>
                                     <th>Amount</th>
                                     <th>Status</th>
-                                    
+                                    <th>Payment Method</th>
+                                    <th>Payment Status</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="preparing-orders">

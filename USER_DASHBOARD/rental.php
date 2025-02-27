@@ -95,26 +95,26 @@ if (isset($_GET['logout'])) {
         .sidebar a:hover, .sidebar a.active { background: rgba(230, 227, 227, 0.2); border-radius: 5px; }
         .main-content { margin-left: 270px; padding: 30px; }
         .navbar {     display: inline-flex;justify-content: center; background-color: black; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); color: #d4af37;  position: fixed; width: 100%; margin-left: -40px; margin-top: -30px;}
-        .product-container { display: flex; flex-wrap: wrap; gap: 30px; }
+        .product-container { display: flex; flex-wrap: wrap; gap: 20px; }
         .product-item { margin-top: 500px;background: #333; padding: 15px; max-width: 30%; margin: 10px 0; border-radius: 5px; box-shadow: 0 2px 4px rgba(255, 255, 255, 0.59); color: #d4af37; }
         .product-image { width: 100%; height: 200px; object-fit: contain; border-radius: 5px; }
         
         .list-group{
-         
             max-width: 135vh;
-            gap: 15px;
+        }
+        .content{
+            margin-top: 100px;
+            
+        } .content h2{
+            align-self: center;
         }
         .content{
             display: flexbox list-item ;
-        flex-wrap: nowrap;
+             flex-wrap: nowrap;
             justify-content: center;
             margin-top: 100px;
             
         } 
-        .content h2{
-            align-self: center;
-            gap: 30px;
-        }
         .logo{
         width: 40px;  /* Adjust size as needed */
         height: auto;
@@ -128,28 +128,31 @@ if (isset($_GET['logout'])) {
         .nav_logo{
             gap: 5px;
         }
-        .log{
-            
+        .uil-signout .log1{
+            background-color: red;
+            color: white;
+            margin-top: 450px;
             color:rgb(243, 243, 243);
         }
-     
+        
    </style>
 </head>
 <body>
-    <div class="sidebar text-white">
+<div class="sidebar text-white">
     <a href="#" class="nav_logo">
                 <img src="/images/Jz.png" alt="Jz Waters Logo" class="logo">
                 <Strong class="Jz_Waters">Jz Waters</Strong>
             </a>
             
-        <a class="uil uil-box active" href="#"  onclick="showProducts()" class="active"><strong class="x">Products</strong></a>
+        <a class="uil uil-box" href="dashboard.php" onclick="showProducts()" class="active"><strong class="x">Products</strong></a>
         <a href="cart.php" class="uil uil-shopping-cart log">
-             Cart (<span id="cart-count"><?php echo $cart_count; ?></span>)</a>
-        <a href="rental.php" class="uil uil-history log" onclick="showOrderHistory()">Product Rental</a>
+    Cart (<span id="cart-count"><?php echo $cart_count; ?></span>)
+</a>
+        <a href="rental.php" class="uil uil-history active" onclick="showOrderHistory()">Product Rental</a>
         <a href="#" class="uil uil-history log" onclick="showOrderHistory()">Orders</a>
         <a href="#" class="uil uil-history log" onclick="showOrderHistory()">Order History</a>
         <a href="settings.php" class="uil uil-cog log" onclick="showOrderHistory()">Settings</a>
-        <a href="/php/logout.php" style ="margin-top: 450px; border-radius:20px; background-color:red; color: white;"  class="uil uil-signout log1" onclick="confirmLogout()">Logout</a>
+        <a href="/php/logout.php" style ="margin-top: 450px; background-color:red; color: white;"  class="uil uil-signout log1" onclick="confirmLogout()">Logout</a>
     </div>
 <!-- Products Section -->
 <section class="products">
@@ -161,14 +164,15 @@ if (isset($_GET['logout'])) {
         <!-- Welcome message and address -->
         <div class="container mt-5">
             <h2 class="text-center">Welcome, <?php echo htmlspecialchars($username); ?>! Have a good day using the system.</h2>
-            </div>
+            <p class="text-center">Your registered address: <?php echo htmlspecialchars($address); ?></p>
+        </div>
 
         <!-- Products List -->
         <div id="content" class="content">
             <h3>Available Products</h3>
 
             <?php
-            $product_types = ['refill', 'normal'];
+            $product_types = ['renting'];
             
             foreach ($product_types as $type):
                 // Query to fetch products by type and status
@@ -202,9 +206,7 @@ if (isset($_GET['logout'])) {
                         <?php if (isset($_SESSION['username']) && $product['stock'] > 0): ?>
                             <form action="/php/add_to_cart.php" method="POST" class="d-inline">
                                 <input type="hidden" name="product_id" value="<?php echo $product['product_id']; ?>">
-                                <label for="quantity_<?php echo $product['product_id']; ?>">Qty:</label>
-                                <input type="number" id="quantity_<?php echo $product['product_id']; ?>" name="quantity" value="1" min="1" max="<?php echo (int) $product['stock']; ?>" class="form-control d-inline-block w-auto" required>
-                                <button type="submit" name="add_to_cart" class="btn btn-primary">Add to Cart</button>
+                                <button type="submit" name="add_to_cart" class="btn btn-primary">Rent Now</button>
                             </form>
                         <?php else: ?>
                             <button class="btn btn-secondary" disabled>Out of Stock</button>
