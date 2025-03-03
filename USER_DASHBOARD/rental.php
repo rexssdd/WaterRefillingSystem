@@ -145,12 +145,10 @@ if (isset($_GET['logout'])) {
             </a>
             
         <a class="uil uil-box" href="dashboard.php" onclick="showProducts()" class="active"><strong class="x">Products</strong></a>
-        <a href="cart.php" class="uil uil-shopping-cart log">
-    Cart (<span id="cart-count"><?php echo $cart_count; ?></span>)
-</a>
+        <a href="cart.php" class="uil uil-shopping-cart log"> Cart (<span id="cart-count"><?php echo $cart_count; ?></span>) </a>
         <a href="rental.php" class="uil uil-history active" onclick="showOrderHistory()">Product Rental</a>
-        <a href="#" class="uil uil-history log" onclick="showOrderHistory()">Orders</a>
-        <a href="#" class="uil uil-history log" onclick="showOrderHistory()">Order History</a>
+        <a href="order.php" class="uil uil-history log" onclick="showOrderHistory()">Orders</a>
+        <a href="order.php" class="uil uil-history log" onclick="showOrderHistory()">Order History</a>
         <a href="settings.php" class="uil uil-cog log" onclick="showOrderHistory()">Settings</a>
         <a href="/php/logout.php" style ="margin-top: 450px; background-color:red; color: white;"  class="uil uil-signout log1" onclick="confirmLogout()">Logout</a>
     </div>

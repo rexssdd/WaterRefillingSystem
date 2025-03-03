@@ -3,10 +3,10 @@
 
 session_start(); 
 
-if (!isset($_SESSION['admin_id'])) {
-  die("Error: Admin ID is missing.");
-}
-$admin_id = $_SESSION['admin_id'];
+// if (!isset($_SESSION['admin_id'])) {
+//   die("Error: Admin ID is missing.");
+// }
+// $admin_id = $_SESSION['admin_id'];
 
 
 
@@ -22,6 +22,16 @@ if (isset($_GET['logout'])) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Products</title>
+
+  <style>
+ 
+      th{
+      font-size:18px;
+      width: 200px;
+    }
+
+   
+  </style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
  <!-- Bootstrap CSS -->
  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
@@ -36,11 +46,11 @@ if (isset($_GET['logout'])) {
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
-          <li class="nav-item"><a class="nav-link active" href="adminproducts.html">Products</a></li>
-          <li class="nav-item"><a class="nav-link" href="adminemployee.html">Employees</a></li>
-          <li class="nav-item"><a class="nav-link" href="deliveryteam.html">Delivery</a></li>
-          <li class="nav-item"><a class="nav-link" href="orders.html">Orders</a></li>
-          <li class="nav-item"><a class="nav-link" href="sales.html">Sales Tracking</a></li>
+          <li class="nav-item"><a class="nav-link active" href="adminproducts.php">Products</a></li>
+          <li class="nav-item"><a class="nav-link" href="adminemployee.php">Employees</a></li>
+          <li class="nav-item"><a class="nav-link" href="delivery.php">Delivery</a></li>
+          <li class="nav-item"><a class="nav-link" href="orders.php">Orders</a></li>
+          <li class="nav-item"><a class="nav-link" href="sales.php">Sales Tracking</a></li>
         </ul>
         <div class="ms-auto">
            <a  href="/php/logout.php" class="btn btn-danger" onclick="confirmLogout()">Logout</a>
@@ -58,7 +68,7 @@ if (isset($_GET['logout'])) {
       <thead>
         <tr>
           <th>Product Code</th>
-          <th>Product Name</th>
+          <th >Product Name</th>
           <th>Price</th>
           <th>Stock</th>
           <th>Description</th>
@@ -78,7 +88,7 @@ if (isset($_GET['logout'])) {
 
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
-                echo "<tr>
+                echo "<tr style= 'height:50px;'>
                         <td>{$row['product_id']}</td>
                         <td>{$row['name']}</td>
                         <td>₱" . number_format($row['price'], 2) . "</td>
@@ -86,9 +96,9 @@ if (isset($_GET['logout'])) {
                         <td>{$row['description']}</td>
                         <td>" . ucfirst($row['product_type']) . "</td>
                         <td><span class='badge bg-" . ($row['status'] == 'available' ? 'success' : 'danger') . "'>" . ucfirst($row['status']) . "</span></td>
-                        <td>
-                            <button class='btn btn-primary btn-sm' onclick='addStock({$row['product_id']})'>Add Stock</button>
-                            <button class='btn btn-secondary btn-sm' onclick='updatePrice({$row['product_id']})'>Update Price</button>
+                        <td style= 'display: flex; gap: 20px; margin-top: 20px;' >
+                            <button class='btn btn-primary btn-sm' style= 'width:100px;'onclick='addStock({$row['product_id']})'>Add Stock</button>
+                            <button class='btn btn-secondary btn-sm' style= ' background: red;' onclick='updatePrice({$row['product_id']})'>Update Price</button>
                         </td>
                       </tr>";
             }

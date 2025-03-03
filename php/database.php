@@ -48,17 +48,23 @@ CREATE TABLE `product` (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 -- Orders Table
-CREATE TABLE orders (
-    order_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    order_date DATE NOT NULL,
-    product_id INT,
-    quantity INT NOT NULL,
-    total DECIMAL(10, 2) NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending',
-    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES product(product_id) ON DELETE CASCADE
-);
+CREATE TABLE `orders` (
+    `order_id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) DEFAULT NULL,
+    `service_id` int(11) DEFAULT NULL,
+    `status_id` int(11) DEFAULT NULL,
+    `address_id` int(11) DEFAULT NULL,
+    `order_date` datetime DEFAULT current_timestamp(),
+    PRIMARY KEY (`order_id`),
+    KEY `idx_order_user` (`user_id`),
+    KEY `idx_order_service` (`service_id`),
+    KEY `idx_order_status` (`status_id`),
+    KEY `idx_order_address` (`address_id`),
+    CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `service` (`service_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`status_id`) REFERENCES `order_status` (`status_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `orders_ibfk_4` FOREIGN KEY (`address_id`) REFERENCES `address` (`address_id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 -- Payment Table

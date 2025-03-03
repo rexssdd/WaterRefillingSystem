@@ -269,7 +269,18 @@ if (isset($_GET['remove_cart_id'])) {
             
             color:rgb(243, 243, 243);
         }
-    
+        .home{
+         position: relative;
+    background-color: rgba(0,0,0,0.6);
+    height: 1000px;
+    width: 100%;
+    /* background-image: url(/WaterRefillingSystem/images/bg-3.jpg); */
+    background-size: cover;
+    background-position: center;
+        }
+        .modal-backdrop.show{
+          opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -285,8 +296,8 @@ if (isset($_GET['remove_cart_id'])) {
         <a href="cart.php"  class="uil uil-shopping-cart active">
              Cart (<span id="cart-count"><?php echo $cart_count; ?></span>)</a>
         <a href="rental.php" class="uil uil-history log" onclick="showOrderHistory()">Product Rental</a>
-        <a href="#" class="uil uil-history log" onclick="showOrderHistory()">Orders</a>
-        <a href="#" class="uil uil-history log" onclick="showOrderHistory()">Order History</a>
+        <a href="order.php" class="uil uil-history log" onclick="showOrderHistory()">Orders</a>
+        <a href="orderhistory.php" class="uil uil-history log" onclick="showOrderHistory()">Order History</a>
         <a href="settings.php" class="uil uil-cog log" onclick="showOrderHistory()">Settings</a>
         <a href="/php/logout.php" style ="margin-top: 450px; background-color:red; color: white;"  class="uil uil-signout log1" onclick="confirmLogout()">Logout</a>
     </div>
@@ -324,11 +335,16 @@ if (isset($_GET['remove_cart_id'])) {
                         <h5><?php echo htmlspecialchars($cart_item['name']); ?></h5>
                         <p>Price: ₱<?php echo number_format($cart_item['price'], 2); ?></p>
                         <label for="quantity_<?php echo $cart_item['cart_id']; ?>">Quantity:</label>
-                        <input type="number" id="quantity_<?php echo $cart_item['cart_id']; ?>" class="form-control"
-                               value="<?php echo $cart_item['quantity']; ?>" min="1"
-                               data-cart-id="<?php echo $cart_item['cart_id']; ?>"
-                               data-product-id="<?php echo $cart_item['product_id']; ?>" 
-                               style="width: 80px;">
+                        <input type="number" id="quantity_<?php echo $cart_item['cart_id']; ?>" 
+                            class="form-control"
+                            value="<?php echo $cart_item['quantity']; ?>" 
+                            min="1" 
+                            oninput="this.value = Math.max(this.value, 1)"
+                            data-cart-id="<?php echo $cart_item['cart_id']; ?>" 
+                            data-product-id="<?php echo $cart_item['product_id']; ?>" 
+                            style="width: 80px;">
+
+
                     </div>
                     <a href="cart.php?remove_cart_id=<?php echo $cart_item['cart_id']; ?>" class="btn btn-danger">Remove</a>
                 </li>
@@ -347,6 +363,8 @@ if (isset($_GET['remove_cart_id'])) {
 <button class="btn btn-primary mt-3" id="placeOrderBtn" data-bs-toggle="modal" data-bs-target="#placeOrderModal">
     Place Order
 </button>
+
+<section class="home" id="home">
 <!-- Place Order Modal -->
 <div class="modal fade" id="placeOrderModal" tabindex="-1" aria-labelledby="placeOrderModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
@@ -354,7 +372,7 @@ if (isset($_GET['remove_cart_id'])) {
       <!-- Header -->
       <div class="modal-header bg-primary text-white">
         <h5 class="modal-title" id="placeOrderModalLabel">Confirm Your Order</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" id="close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
       <!-- Body -->
@@ -370,16 +388,22 @@ if (isset($_GET['remove_cart_id'])) {
                 + Add Address
               </button>
             <?php endif; ?>
-            <button type="button" class="btn btn-info mt-2" data-bs-toggle="modal" data-bs-target="#manageAddressModal">
-              Manage Addresses
-            </button>
+            <!-- Update Address Button -->
+            <button type="button" class="btn btn-info mt-2" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+            Update Address
+          </button>
+
+
+
           </div>
 
-          <!-- Note -->
-          <div class="mb-3">
-            <label for="orderNote" class="form-label fw-bold">Special Instructions (Optional)</label>
-            <textarea class="form-control" id="orderNote" name="orderNote" rows="2" placeholder="Add any notes for delivery..."></textarea>
-          </div>
+              
+            <!-- Note -->
+      <div class="mb-3">
+        <label for="orderNote" class="form-label fw-bold">Special Instructions (Optional)</label>
+        <textarea class="form-control" id="orderNote" name="orderNote" rows="2" placeholder="Add any notes for delivery..."></textarea>
+      </div>
+
 
           <!-- Payment Method -->
           <div class="mb-3">
@@ -396,20 +420,53 @@ if (isset($_GET['remove_cart_id'])) {
             <ul id="orderSummary" class="list-group border rounded">
               <!-- Items will be dynamically added here -->
             </ul>
-            <p class="mt-3 text-end fs-5"><strong>Total:</strong> ₱<span id="orderTotal">0.00</span></p>
+            <p class="mt-3 text-end fs-5">
+    <strong>Total:</strong> ₱<span id="orderTotal">0.00</span>
+</p>
+
+<!-- Hidden input for form submission -->
+<input type="hidden" id="totalPrice" name="total_price" value="0">
           </div>
 
-          <!-- Confirm Order Button -->
-          <div class="text-center">
-            <button type="submit" class="btn btn-success w-100 py-2">Confirm Order</button>
-          </div>
+         <!-- Confirm Order Button -->
+         <div class="text-center">
+               <button type="submit" class="btn btn-success w-100 py-2">Confirm Order</button>
+             </div>
         </form>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Add Address Modal -->
+
+<!-- Manage Address Modal -->
+<div class="modal fade" id="manageAddressModal" tabindex="-1" aria-labelledby="manageAddressModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Header -->
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title" id="manageAddressModalLabel">Manage Addresses</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <ul id="addressList" class="list-group">
+          <!-- Addresses will be dynamically listed here -->
+        </ul>
+
+        <!-- Button to open Add Address Modal -->
+        <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+          Add New Address
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<!-- Add Address Modal (Moved Outside) -->
 <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -437,64 +494,253 @@ if (isset($_GET['remove_cart_id'])) {
             <input type="text" class="form-control" id="landmark" name="landmark" required>
           </div>
 
+          <div class="mb-3">
+            <label for="note" class="form-label">Note</label>
+            <textarea class="form-control" id="note" name="note" rows="3" placeholder="Additional details (optional)"></textarea>
+          </div>
+
           <button type="submit" class="btn btn-primary w-100">Save Address</button>
         </form>
       </div>
     </div>
   </div>
 </div>
+</section>
 
-<!-- Manage Address Modal -->
-<div class="modal fade" id="manageAddressModal" tabindex="-1" aria-labelledby="manageAddressModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Header -->
-      <div class="modal-header bg-info text-white">
-        <h5 class="modal-title" id="manageAddressModalLabel">Manage Addresses</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <!-- Body -->
-      <div class="modal-body">
-        <ul id="addressList" class="list-group">
-          <!-- Addresses will be dynamically listed here -->
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" crossorigin="anonymous"></script>
 <script>
+
+document.querySelectorAll('input[type=number]').forEach(input => {
+    input.addEventListener('change', function() {
+        if (this.value < 1) {
+            alert('Invalid quantity! Must be at least 1.');
+            this.value = 1;
+        }
+    });
+});
+document.addEventListener("DOMContentLoaded", function () {
+    const orderForm = document.getElementById("orderForm");
+
+    // Ensure quantity inputs are valid (min 1)
+    document.querySelectorAll('input[type=number]').forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.value < 1) {
+                alert('Invalid quantity! Must be at least 1.');
+                this.value = 1;
+            }
+        });
+    });
+
+    // Handle form submission
+    if (orderForm) {
+        orderForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const orderTotalElement = document.getElementById("orderTotal");
+            if (!orderTotalElement) {
+                alert("Order total is missing.");
+                return;
+            }
+
+            const totalPrice = parseFloat(orderTotalElement.textContent.trim().replace('₱', ''));
+            if (isNaN(totalPrice) || totalPrice <= 0) {
+                alert("Invalid total price. Please check your order.");
+                return;
+            }
+
+            document.getElementById("totalPrice").value = totalPrice;
+
+            const formData = new FormData(orderForm);
+
+            try {
+                const response = await fetch("/php/place_order.php", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const data = await response.json(); // Get the response as JSON
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "Failed to place order.");
+                }
+
+                alert("Order placed successfully!");
+
+                // Clear the cart and refresh the page
+                location.reload(); // This will refresh the page after a successful order
+
+            } catch (error) {
+                console.error("Error:", error.message);
+                alert(error.message || "An error occurred while placing your order.");
+            }
+        });
+    }
+
+});
+
+
+
+
+  const updateAddressButton = document.querySelector('[data-bs-target="#manageAddressModal"]');
+if (updateAddressButton) {
+    updateAddressButton.addEventListener("click", function () {
+        let modal = new bootstrap.Modal(document.getElementById("manageAddressModal"));
+        modal.show();
+    });
+} else {
+    console.error("Error: Update Address button not found.");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const userId = 1;  // Replace with actual logged-in user ID
+    fetchAddresses(userId);
+});
+
+function fetchAddresses(userId) {
+    fetch(`/php/fetch_user_address.php?user_id=${userId}`)
+        .then(response => response.text()) // <-- Get raw response first
+        .then(text => {
+            console.log("Raw response:", text); // Log raw output
+            return JSON.parse(text); // Try to parse JSON
+        })
+        .then(data => {
+            console.log("Parsed JSON:", data); // Ensure JSON is correct
+
+            const addressList = document.getElementById("addressList");
+            addressList.innerHTML = "";
+
+            if (!data.success) {
+                addressList.innerHTML = `<li class='list-group-item'>${data.message || "No addresses found"}</li>`;
+                return;
+            }
+
+            const addresses = data.data || [];
+            if (addresses.length === 0) {
+                addressList.innerHTML = "<li class='list-group-item'>No addresses found</li>";
+                return;
+            }
+
+            addresses.forEach(address => {
+                const li = document.createElement("li");
+                li.classList.add("list-group-item");
+                li.textContent = `${address.street}, ${address.barangay}, Landmark: ${address.landmark}, Note: ${address.note}`;
+                addressList.appendChild(li);
+            });
+        })
+        .catch(error => console.error("Error fetching addresses:", error));
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const closeButton = document.querySelector("#placeOrderModal .btn-close");
+
+    if (closeButton) {
+        closeButton.addEventListener("click", function () {
+            const placeOrderModal = new bootstrap.Modal(document.getElementById("placeOrderModal"));
+            placeOrderModal.hide();
+        });
+    }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  const addAddressModal = document.getElementById("addAddressModal");
+  const placeOrderModal = new bootstrap.Modal(document.getElementById("home"));
+
+  addAddressModal.addEventListener("hidden.bs.modal", function () {
+    placeOrderModal.show(); // Reopen Place Order Modal when Add Address Modal is closed
+  });
+});
+
+document.getElementById('orderForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  // Simulate form submission (Replace this with your actual order submission logic)
+  console.log('Order submitted!');
+
+  // Close the modal manually
+  const modal = bootstrap.Modal.getInstance(document.getElementById('placeOrderModal'));
+  modal.hide();
+});
+  
+async function loadAddressNote() {
+  try {
+    const response = await fetch('/php/fetch_address.php');
+    const data = await response.json();
+
+    if (data.note) {
+      document.getElementById('orderNote').value = data.note;
+    }
+  } catch (error) {
+    console.error('Error fetching address note:', error);
+  }
+}
+
+// Call function when the page loads
+document.addEventListener('DOMContentLoaded', loadAddressNote);
+
+document.querySelector('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch('/php/save_address.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeModal(); // Hide the modal
+            location.reload(); // Refresh to show the new address
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error adding address:', error);
+    });
+});
+
     // Fetch and display user's address
 document.addEventListener('DOMContentLoaded', async () => {
   await fetchAddress();
 });
 
 async function fetchAddress() {
-  try {
-    const response = await fetch('fetch_address.php');
-    const data = await response.json();
+    try {
+        const response = await fetch("/php/fetch_address.php"); // Adjust the endpoint if needed
+        const data = await response.json();
 
-    const addressContainer = document.getElementById('addressContainer');
-    const addressField = document.getElementById('address');
-    const manageAddressButton = document.getElementById('manageAddressBtn');
+        const addressList = document.getElementById("addressList"); // Ensure this ID exists
+        if (!addressList) {
+            console.error("Error: addressList element not found.");
+            return; // Stop execution if the element is missing
+        }
 
-    if (data && data.address) {
-      addressField.textContent = `${data.barangay}, ${data.street}, ${data.landmark}`;
-      manageAddressButton.style.display = 'block'; // Show manage button
-    } else {
-      addressContainer.innerHTML = `
-        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-          + Add Address
-        </button>`;
-      manageAddressButton.style.display = 'none'; // Hide manage button
+        if (data.success) {
+            addressList.innerHTML = ""; // Clear existing content
+
+            data.addresses.forEach(address => {
+                let listItem = document.createElement("li");
+                listItem.classList.add("list-group-item");
+                listItem.textContent = address;
+                addressList.appendChild(listItem);
+            });
+        } else {
+            addressList.innerHTML = "<li class='list-group-item text-danger'>No addresses found.</li>";
+        }
+    } catch (error) {
+        console.error("Error fetching address:", error);
     }
-  } catch (error) {
-    console.error('Error fetching address:', error);
-  }
 }
+
+// Call fetchAddress only when DOM is fully loaded
+document.addEventListener("DOMContentLoaded", fetchAddress);
+
 
 // Add new address
 document.getElementById('addAddressForm').addEventListener('submit', async (e) => {
@@ -503,18 +749,27 @@ document.getElementById('addAddressForm').addEventListener('submit', async (e) =
   const barangay = document.getElementById('barangay').value;
   const street = document.getElementById('street').value;
   const landmark = document.getElementById('landmark').value;
+  const note = document.getElementById('note').value;
 
   try {
-    const response = await fetch('add_address.php', {
+    const response = await fetch('/php/add_address.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ barangay, street, landmark })
+      body: JSON.stringify({ barangay, street, landmark, note })
     });
 
     const result = await response.json();
     if (result.status === 'success') {
       fetchAddress();
-      bootstrap.Modal.getInstance(document.getElementById('addAddressModal')).hide();
+      const addAddressModal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
+      addAddressModal.hide();
+
+      // Ensure modal backdrop is removed
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+
+      // Optionally, show the "Place Order" modal
+      const placeOrderModal = new bootstrap.Modal(document.getElementById('placeOrderModal'));
+      placeOrderModal.show();
     } else {
       alert('Failed to add address. Please try again.');
     }
@@ -523,12 +778,17 @@ document.getElementById('addAddressForm').addEventListener('submit', async (e) =
   }
 });
 
+
+
+
 // Manage address (show the update modal)
-document.getElementById('manageAddressBtn').addEventListener('click', () => {
-  fetchAddressForEdit();
-  const manageAddressModal = new bootstrap.Modal(document.getElementById('manageAddressModal'));
-  manageAddressModal.show();
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelector('[data-bs-target="#manageAddressModal"]').addEventListener("click", function() {
+        const modal = new bootstrap.Modal(document.getElementById("manageAddressModal"));
+        modal.show();
+    });
 });
+
 
 // Fetch address for editing
 async function fetchAddressForEdit() {
@@ -543,33 +803,6 @@ async function fetchAddressForEdit() {
     console.error('Error fetching address for edit:', error);
   }
 }
-
-// Update address
-document.getElementById('manageAddressForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const barangay = document.getElementById('editBarangay').value;
-  const street = document.getElementById('editStreet').value;
-  const landmark = document.getElementById('editLandmark').value;
-
-  try {
-    const response = await fetch('update_address.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ barangay, street, landmark })
-    });
-
-    const result = await response.json();
-    if (result.status === 'success') {
-      fetchAddress();
-      bootstrap.Modal.getInstance(document.getElementById('manageAddressModal')).hide();
-    } else {
-      alert('Failed to update address. Please try again.');
-    }
-  } catch (error) {
-    console.error('Error updating address:', error);
-  }
-});
 
      document.getElementById('addAddressForm').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -632,37 +865,50 @@ function fetchCartItems() {
         })
         .catch(error => console.error("Fetch Error:", error));
 }
+
+
 function fetchCartItems() {
   fetch('/php/fetch_cart.php')
     .then(response => response.json())
     .then(data => {
       if (data.status === 'success') {
         const items = data.items;
-        const orderSummaryBody = document.getElementById('orderSummaryBody');
-        const totalPrice = document.getElementById('totalPrice');
+        const orderSummary = document.getElementById('orderSummary');
+        const orderTotal = document.getElementById('orderTotal');
+        const totalPriceInput = document.getElementById('totalPrice');
+
+        if (!orderSummary || !orderTotal || !totalPriceInput) {
+          console.error('Error: Required elements not found in the DOM.');
+          return;
+        }
 
         // Clear previous content
-        orderSummaryBody.innerHTML = '';
+        orderSummary.innerHTML = '';
 
-        // Add each item as a paragraph
+        // Add each item to the modal
         let total = 0;
         items.forEach(item => {
           const itemDetails = `
-            <p><strong>${item.product_name}</strong> - 
-            Quantity: ${item.quantity}, 
-            Price: ₱${parseFloat(item.price).toFixed(2)}, 
-            Subtotal: ₱${parseFloat(item.subtotal).toFixed(2)}</p>
+            <li class="list-group-item">
+              <strong>${item.product_name}</strong> - 
+              Quantity: ${item.quantity}, 
+              Price: ₱${parseFloat(item.price).toFixed(2)}, 
+              Subtotal: ₱${parseFloat(item.subtotal).toFixed(2)}
+            </li>
           `;
           total += parseFloat(item.subtotal);
-          orderSummaryBody.innerHTML += itemDetails;
+          orderSummary.innerHTML += itemDetails;
         });
 
         // Update total price
-        totalPrice.textContent = total.toFixed(2);
+        orderTotal.textContent = total.toFixed(2);
+        totalPriceInput.value = total.toFixed(2);
 
         // Show the modal
         const placeOrderModal = new bootstrap.Modal(document.getElementById('placeOrderModal'));
         placeOrderModal.show();
+      } else {
+        console.error('Failed to fetch cart items:', data.message);
       }
     })
     .catch(error => console.error('Error fetching cart items:', error));
@@ -672,9 +918,6 @@ function fetchCartItems() {
 document.getElementById('placeOrderBtn').addEventListener('click', fetchCartItems);
 
 
-</script>
-
-<script>
     document.addEventListener("DOMContentLoaded", function () {
     const placeOrderModal = new bootstrap.Modal(document.getElementById("placeOrderModal"));
     const orderSummary = document.getElementById("orderSummary");
@@ -820,13 +1063,10 @@ document.getElementById('orderForm').addEventListener('submit', function (e) {
         return;
     }
 
-    fetch('/php/get_cart_items.php') // Get cart items before placing order
+    fetch('/php/fetch_cart.php') // Get cart items before placing order
         .then(response => response.json())
         .then(data => {
-            if (data.items.length === 0) {
-                alert('Your cart is empty.');
-                return;
-            }
+
 
             const orderData = {
                 items: data.items,
@@ -871,7 +1111,6 @@ function updateCartCount(count) {
          logoutModal.show();
             }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <?php $conn->close(); ?>
 </body>

@@ -89,7 +89,7 @@ if (isset($_GET['logout'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        body { background-color:rgb(0, 0, 0);  color: #d4af37; font-family: 'Poppins', sans-serif; }
+            body { background-color:rgb(0, 0, 0);  color: #d4af37; font-family: 'Poppins', sans-serif; }
         .sidebar {  background-color: black;  height: 100vh; width: 260px; position: fixed; padding-top: 20px; color: #d4af37; box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1); }
         .sidebar a { color: #d4af37; padding: 15px; text-decoration: none; display: block; transition: background 0.3s; }
         .sidebar a:hover, .sidebar a.active { background: rgba(230, 227, 227, 0.2); border-radius: 5px; }
@@ -146,10 +146,11 @@ if (isset($_GET['logout'])) {
         <a href="cart.php" class="uil uil-shopping-cart log">
              Cart (<span id="cart-count"><?php echo $cart_count; ?></span>)</a>
         <a href="rental.php" class="uil uil-history log" onclick="showOrderHistory()">Product Rental</a>
-        <a href="#" class="uil uil-history log" onclick="showOrderHistory()">Orders</a>
-        <a href="#" class="uil uil-history log" onclick="showOrderHistory()">Order History</a>
+        <a href="order.php" class="uil uil-history log" onclick="showOrderHistory()">Orders</a>
+        <a href="orderhistory.php" class="uil uil-history log" onclick="showOrderHistory()">Order History</a>
         <a href="settings.php" class="uil uil-cog log" onclick="showOrderHistory()">Settings</a>
         <a href="/php/logout.php" style ="margin-top: 450px; border-radius:20px; background-color:red; color: white;"  class="uil uil-signout log1" onclick="confirmLogout()">Logout</a>
+   
     </div>
 <!-- Products Section -->
 <section class="products">

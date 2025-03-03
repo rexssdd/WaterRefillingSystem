@@ -98,8 +98,8 @@ while ($product = $product_result->fetch_assoc()) {
     <body>
         <header class="header">
         <nav class="nav">
-            <a href="#" class="nav_logo">
-                <img src="/images/Jz.png" alt="Jz Waters Logo" class="logo">
+            <a href="/AdminPage/adminlogin.php" class="nav_logo">
+                <img src="/images/Jz.png"  alt="Jz Waters Logo" class="logo">
                 Jz Waters
             </a>
             

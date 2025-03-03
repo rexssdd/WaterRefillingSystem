@@ -30,6 +30,37 @@ $result = $conn->query($sql);
      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style >
+        body{
+            background: black;
+        }
+         .ms-auto{
+      margin-left: auto !important;
+    }
+
+    td{
+        max-width: 350px;
+    }
+    .btn-sm{
+        width: 100px;
+    }
+    .card-header{
+        color: white;
+    }
+    p{
+        color: white;
+    }
+
+    .card-body{
+        background: black;
+        border-color: black;
+        box-shadow:rgb(140, 141, 143);
+    }
+    h4{
+        color: white;
+    }
+    </style>
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -42,25 +73,22 @@ $result = $conn->query($sql);
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html">Home</a>
+                        <a class="nav-link" href="adminproducts.php">Products</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="adminproducts.html">Products</a>
+                        <a class="nav-link active" href="adminemployee.php">Employees</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="adminemployee.html">Employees</a>
+                        <a class="nav-link" href="delivery.php">Delivery</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="deliveryteam.html">Delivery</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="orders.html">Orders</a>
+                        <a class="nav-link" href="orders.php">Orders</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="sales.html">Sales Tracking</a>
                     </li>
                     <li class="nav-item ms-auto">
-                        <button class="btn btn-danger" onclick="logout()">Logout</button>
+                        <button class="btn btn-danger" style="  margin-left: 1100px;" onclick="logout()">Logout</button>
                     </li>
                 </ul>
             </div>
@@ -78,7 +106,7 @@ $result = $conn->query($sql);
         <div class="card mt-4">
             <div class="card-body">
                 <h4>Employee List</h4>
-                <table class="table table-striped" id="employee-table">
+                <table class="table table-dark table-striped" id="employee-table">
                 <thead>
     <tr>
         <th>Employee ID</th>
@@ -106,7 +134,7 @@ $result = $conn->query($sql);
             $status_class = ($row["status"] == 'Active') ? 'btn-success' : 'btn-danger';
             echo "<button class='btn " . $status_class . " btn-sm' onclick='toggleStatus(" . $row["employee_id"] . ", \"" . $row["status"] . "\")'>" . ucfirst($row["status"]) . "</button>";
             echo "</td>";
-            echo "<td>";
+            echo "<td style= 'display: flex; gap:14px; height: 50px; ' >";
             echo "<button class='btn btn-warning btn-sm' onclick='editEmployee(" . $row["employee_id"] . ")'>Edit</button>";
             echo "<button class='btn btn-danger btn-sm' onclick='deleteEmployee(" . $row["employee_id"] . ")'>Delete</button>";
             echo "</td>";

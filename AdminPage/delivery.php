@@ -64,7 +64,6 @@
                 const response = await fetch('fetch_delivery_orders.php');
                 const orders = await response.json();
                 const tbody = document.getElementById('delivery-orders');
-
                 tbody.innerHTML = '';
 
                 orders.forEach(order => {
