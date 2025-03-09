@@ -26,15 +26,20 @@
         .btn-success, .btn-danger {
             width: 100%;
         }
-        input[type="text"] {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
+        .modal-header {
+            background-color: #343a40;
+            color: white;
         }
-        .form-inline {
-            display: flex;
-            gap: 0.5rem;
+        .logout-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -42,7 +47,8 @@
     <div class="container mt-5">
         <h2 class="text-center mb-4">Delivery Team Dashboard</h2>
         
-        <table class="table table-bordered table-hover">
+        <table class="table table-dark table-striped table-hover " >
+ 
             <thead class="table-dark">
                 <tr>
                     <th>Order ID</th>
@@ -57,6 +63,30 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Reason Modal -->
+    <div class="modal fade" id="reasonModal" tabindex="-1" aria-labelledby="reasonModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reasonModalLabel">Reason for Failed Delivery</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="failDeliveryForm">
+                        <div class="mb-3">
+                            <label for="failReason" class="form-label">Reason</label>
+                            <textarea class="form-control" id="failReason" name="reason" required></textarea>
+                        </div>
+                        <input type="hidden" id="orderId" name="order_id">
+                        <button type="submit" class="btn btn-danger">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="logout-button" onclick="location.href='/php/logout.php';">Logout</button>
 
     <script>
         async function fetchDeliveryOrders() {
@@ -73,12 +103,7 @@
                             <td>${order.customer_name || 'Guest'}</td>
                             <td>${order.status}</td>
                             <td><button class="btn btn-success" onclick="confirmDelivery(${order.order_id})">Confirm</button></td>
-                            <td>
-                                <form class="form-inline" onsubmit="return failDelivery(event, ${order.order_id})">
-                                    <input type="text" name="reason" placeholder="Reason for failure" required>
-                                    <button type="submit" class="btn btn-danger">Fail</button>
-                                </form>
-                            </td>
+                            <td><button class="btn btn-danger" onclick="showReasonModal(${order.order_id})">Fail</button></td>
                         </tr>
                     `;
                     tbody.innerHTML += row;
@@ -103,9 +128,15 @@
             }
         }
 
-        async function failDelivery(event, orderId) {
+        function showReasonModal(orderId) {
+            document.getElementById('orderId').value = orderId;
+            new bootstrap.Modal(document.getElementById('reasonModal')).show();
+        }
+
+        document.getElementById('failDeliveryForm').addEventListener('submit', async function(event) {
             event.preventDefault();
-            const reason = event.target.reason.value;
+            const orderId = document.getElementById('orderId').value;
+            const reason = document.getElementById('failReason').value;
 
             try {
                 const response = await fetch('update_order_status.php', {
@@ -114,14 +145,18 @@
                     body: JSON.stringify({ order_id: orderId, status: 'failed', reason: reason })
                 });
                 const result = await response.json();
-                if (result.success) fetchDeliveryOrders();
-                else alert('Failed to update order status.');
+                if (result.success) {
+                    fetchDeliveryOrders();
+                    bootstrap.Modal.getInstance(document.getElementById('reasonModal')).hide();
+                } else alert('Failed to update order status.');
             } catch (error) {
                 console.error('Error failing delivery:', error);
             }
-        }
+        });
 
         document.addEventListener('DOMContentLoaded', fetchDeliveryOrders);
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

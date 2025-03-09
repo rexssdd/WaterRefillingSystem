@@ -1,0 +1,59 @@
+
+.sidebar {
+    margin-top: 0px;
+          width: 250px;
+          height: 102vh;
+          position: fixed;
+          background: dark;
+          background-color:rgb(5, 48, 95) ;
+          padding-top: 20px;
+      }
+      .sidebar a {
+          color: white;
+          text-decoration: none;
+          display: block;
+          padding: 10px 20px;
+      }
+      .sidebar a:hover, a.active {
+          background: #0056b3;
+      }
+      .logout {
+          position: absolute;
+          bottom: 30px;
+          width: 100%;
+      }
+      .content {
+          margin-left: 250px;
+          padding: 20px;
+          width: 100%;
+      }
+      .card-header{
+        color: white;
+      }
+
+      table{
+        
+        margin-top: 130px;
+        margin-left: 340px;
+        max-width: 75%;
+      }
+      .logo{
+      width: 40px;  /* Adjust size as needed */
+      height: auto;
+      gap: 2px;
+      margin-right: 20px; 
+      }
+      strong{
+        color: gold;
+        font-size: 24px;
+      }
+      .logout{
+        background-color: red;
+        border-radius: 14px;
+      }
+      a{
+
+        display: inline;
+        gap: 40px;
+        font-size: 18px;
+      } 

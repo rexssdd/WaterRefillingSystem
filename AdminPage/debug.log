@@ -1,0 +1,36 @@
+{
+    "labels": [
+        "Tuesday",
+        "Wednesday"
+    ],
+    "revenue": [
+        398,
+        102
+    ],
+    "cost": [
+        190,
+        50
+    ],
+    "sales": [
+        208,
+        52
+    ],
+    "salesCount": [
+        11,
+        4
+    ],
+    "topSelling": [
+        {
+            "product_name": "Purified Water - 5 Gallons",
+            "total_sold": "20"
+        },
+        {
+            "product_name": "Bottle Cap Replacement",
+            "total_sold": "4"
+        }
+    ],
+    "total_revenue": 500,
+    "total_costs": 240,
+    "roi": 108.33333333333333,
+    "status": "Profit"
+}

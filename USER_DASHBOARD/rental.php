@@ -66,6 +66,13 @@ $result = $stmt->get_result();
 $cart_data = $result->fetch_assoc();
 $cart_count = $cart_data['total_items'] ?? 0;
 
+$userId = $_SESSION['user_id'];
+$addressQuery = "SELECT * FROM address WHERE user_id = ?";
+$stmt = $conn->prepare($addressQuery);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$addresses = $result->fetch_all(MYSQLI_ASSOC);
 // Handle logout
 if (isset($_GET['logout'])) {
     session_destroy();
@@ -81,6 +88,9 @@ if (isset($_GET['logout'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JZ Waters User Dashboard</title>
+                                           <!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
     <!-- Bootstrap CSS -->
     <link rel = "stylesheet" href = "https://unicons.iconscout.com/release/v4.0.0/css/line.css"/>
 
@@ -89,140 +99,510 @@ if (isset($_GET['logout'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        body { background-color:rgb(0, 0, 0);  color: #d4af37; font-family: 'Poppins', sans-serif; }
-        .sidebar {  background-color: black;  height: 100vh; width: 260px; position: fixed; padding-top: 20px; color: #d4af37; box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1); }
-        .sidebar a { color: #d4af37; padding: 15px; text-decoration: none; display: block; transition: background 0.3s; }
-        .sidebar a:hover, .sidebar a.active { background: rgba(230, 227, 227, 0.2); border-radius: 5px; }
-        .main-content { margin-left: 270px; padding: 30px; }
-        .navbar {     display: inline-flex;justify-content: center; background-color: black; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); color: #d4af37;  position: fixed; width: 100%; margin-left: -40px; margin-top: -30px;}
-        .product-container { display: flex; flex-wrap: wrap; gap: 20px; }
-        .product-item { margin-top: 500px;background: #333; padding: 15px; max-width: 30%; margin: 10px 0; border-radius: 5px; box-shadow: 0 2px 4px rgba(255, 255, 255, 0.59); color: #d4af37; }
-        .product-image { width: 100%; height: 200px; object-fit: contain; border-radius: 5px; }
+        body {
+        background-color:   #353544;
+        color: white;
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .sidebar {
+        color: white;
+        font-family: 'Poppins', sans-serif;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 260px;
+        height: 100vh;
+        background: 	#1e1e2f;
+        transition: 0.3s ease-in-out;
+        padding-top: 20px;
+        z-index: 1000;
+    }
+
+    .sidebar.show {
+        left: 0;
+    }
+    .sidebar.hide {
+        left: -257px;
+    }
+
+
+    .sidebar a {
+        color:white;
+        padding: 15px;
+        text-decoration: none;
+        display: block;
+        transition: 0.3s;
+    }
+
+    .sidebar a:hover, 
+    .sidebar a.active {
+        font-weight: 400;
+        line-height: 1.6;
+        font-size: 18px;
+        color: gold;
+        background: rgba(230, 227, 227, 0.2);
+        border-radius: 5px;
+    }
+
+    .menu-toggle {
+        position: fixed;
+        top: 15px;
+        left: 275px;
+        background: #d4af37;
+        color: #101720;
+        border: none;
+        padding: 10px 15px;
+        cursor: pointer;
+        z-index: 1100;
+        border-radius: 5px;
+    }
+    .nav_logo{
+            gap: 5px;
+        }
+
         
-        .list-group{
-            max-width: 135vh;
-        }
-        .content{
-            margin-top: 100px;
-            
-        } .content h2{
-            align-self: center;
-        }
-        .content{
-            display: flexbox list-item ;
-             flex-wrap: nowrap;
-            justify-content: center;
-            margin-top: 100px;
-            
-        } 
         .logo{
         width: 40px;  /* Adjust size as needed */
         height: auto;
         gap: 2px;
         margin-right: 20px; 
         }
-        .Jz_Waters{
-            font-size: 26px;
-            font-style: sans-serif, arial;
+
+    .menu-toggle:focus {
+        outline: none;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 100%;
+            left: -100%;
         }
-        .nav_logo{
-            gap: 5px;
+
+        .sidebar.show {
+            left: 0;
         }
-        .uil-signout .log1{
-            background-color: red;
-            color: white;
-            margin-top: 450px;
-            color:rgb(243, 243, 243);
-        }
-        
+    }   
+
+    .logout-btn {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: red;
+        color: black;
+        padding: 10px;
+        text-align: center;
+        border-radius: 20px;
+        width: 80%;
+        text-decoration: none;
+        text-align: center;
+        font-weight: bold;
+    }
+
+
+    .main-content { 
+        margin-left: 260px; 
+        transition: margin-left 0.3s ease-in-out; 
+    }
+    .sidebar.show ~ .main-content {
+        margin-left: 260px; 
+    }
+    .sidebar:not(.show) ~ .main-content {
+        margin-left: 0;
+    }
+    .products{
+        margin:20px;
+    }
+    .user-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .user-icon {
+        cursor: pointer;
+        color: #d4af37;
+        font-size: 1.5rem;
+    }
+
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        background: #232b2b;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        min-width: 120px;
+        overflow: hidden;
+        z-index: 1000;
+    }
+
+    .dropdown-menu a {
+        display: block;
+        padding: 10px;
+        color: #d4af37;
+        text-decoration: none;
+        transition: 0.3s;
+        text-align: center;
+    }
+
+    .dropdown-menu a:hover {
+        background: rgba(230, 227, 227, 0.2);
+    }
+    .n{
+        margin-left: 10px;
+        color: gold;
+        font-size: 18px;
+    }
+    a{
+        color: white;
+    }
+    .uil-house-user{
+        font-size: 24px;
+    }
+    .x{
+        font-size: 24px;
+    }
+
+    /* Modal Background */
+.modal-content {
+    background: #1e1e2f;
+    color: red;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(202, 200, 200, 0.3);
+}
+
+/* Modal Header */
+.modal-header {
+    background: #FFFFF0;
+    color: black;
+    border-radius: 12px 12px 0 0;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+/* Close Button */
+.btn-close {
+    background-color:  #FFFFF0;
+    border-radius: 50%;
+    padding: 8px;
+    transition: 0.3s;
+}
+
+.btn-close:hover {
+    background-color:  #FFFFF0;
+}
+
+/* Modal Body */
+.modal-body {
+    padding: 20px;
+    font-size: 16px;
+}
+
+/* Labels */
+.modal-body label {
+    font-weight: bold;
+    color: #FFFFF0;
+    margin-top: 10px;
+    display: block;
+}
+
+/* Select and Input Fields */
+.modal-body select,
+.modal-body input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solidrgb(255, 255, 255);
+    background: #2a2a3c;
+    color: white;
+    font-size: 16px;
+}
+
+/* Placeholder Text Color */
+.modal-body input::placeholder,
+.modal-body select {
+    color: #bbb;
+}
+
+/* Confirm Button */
+.modal-body .btn-primary {
+    background: #FFFFF0;
+    color: black;
+    font-weight: bold;
+    font-size: 18px;
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+.modal-body .btn-primary:hover {
+    background:#284387;
+    color:  #FFFFF0;
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+    .modal-content {
+        padding: 15px;
+    }
+
+    .modal-body input,
+    .modal-body select {
+        font-size: 14px;
+    }
+
+    .modal-title {
+        font-size: 18px;
+    }
+}
+
    </style>
 </head>
 <body>
 <div class="sidebar text-white">
     <a href="#" class="nav_logo">
                 <img src="/images/Jz.png" alt="Jz Waters Logo" class="logo">
-                <Strong class="Jz_Waters">Jz Waters</Strong>
+                <Strong style="font-size: 24px;" class="Jz_Waters">Jz Waters</Strong>
             </a>
             
-        <a class="uil uil-box" href="dashboard.php" onclick="showProducts()" class="active"><strong class="x">Products</strong></a>
+        <a class="uil uil-box" href="dashboard.php" onclick="showProducts()" >Products</a>
         <a href="cart.php" class="uil uil-shopping-cart log"> Cart (<span id="cart-count"><?php echo $cart_count; ?></span>) </a>
-        <a href="rental.php" class="uil uil-history active" onclick="showOrderHistory()">Product Rental</a>
-        <a href="order.php" class="uil uil-history log" onclick="showOrderHistory()">Orders</a>
+        <a href="rental.php" class="uil uil-house-user active" onclick="showOrderHistory()"><strong class="n">Product Rental</strong></a>
+        <a href="order.php" class="uil uil-heart-alt log" onclick="showOrderHistory()">Orders</a>
         <a href="order.php" class="uil uil-history log" onclick="showOrderHistory()">Order History</a>
         <a href="settings.php" class="uil uil-cog log" onclick="showOrderHistory()">Settings</a>
-        <a href="/php/logout.php" style ="margin-top: 450px; background-color:red; color: white;"  class="uil uil-signout log1" onclick="confirmLogout()">Logout</a>
-    </div>
+        <a href="/php/logout.php" class="uil uil-signout logout-btn" style=" color: white; position: absolute; bottom: 20px;">Logout</a>
+        </div>
 <!-- Products Section -->
+<!-- Main Content -->
 <section class="products">
-    <div class="main-content">
-        <nav class="navbar navbar-light p-3 mb-4 rounded">
-            <h2 id="page-title">Products</h2>
-        </nav>
+        <div class="main-content">
+            <nav class="navbar" style="color:white; background:	#515151; border-radius: 50px;">
+                <i  style="margin-left: 100px;" class="uil uil-bars fs-3" id="menu-icon" ></i>
+                <h2 id="page-title" class="uil uil-house-user"><strong class="x">Product Rental</strong></h2>
+                 <!-- User Icon with Dropdown -->
+            <div class="user-container">
+                <i class="uil uil-user fs-3 user-icon" id="userIcon" style=" color:white;margin-right: 100px;"></i>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="settings.php">Settings</a>
+                    <a href="/php/logout.php" onclick="confirmLogout()">Logout</a>
+                </div>
+            </div>
+                    </nav>
+            <div id="content" class="content" style="margin-top:20px;">
+                <h3 class="uil-shopping-bag">Available Products</h3>
+                <?php
+                $product_types = ['renting'];
+                foreach ($product_types as $type):
+                    $product_query = "SELECT * FROM product WHERE product_type = '$type' AND status = 'available'";
+                    $product_result = $conn->query($product_query);
+                ?>
+                    <div class="row row-cols-1 row-cols-md-3 g-4">
+                    <?php if ($product_result->num_rows > 0): ?>
+                        <?php while ($product = $product_result->fetch_assoc()): ?>
 
-        <!-- Welcome message and address -->
-        <div class="container mt-5">
-            <h2 class="text-center">Welcome, <?php echo htmlspecialchars($username); ?>! Have a good day using the system.</h2>
-            <p class="text-center">Your registered address: <?php echo htmlspecialchars($address); ?></p>
+<div class="col">
+    <div class="card shadow-lg border-0 rounded-4 text-center"  
+        style="box-shadow: 0 6px 14px rgba(247, 247, 247, 0.9); background: #1e1e2f; color: #fff; width: 80%; height:500px; margin: auto; font-family: 'Poppins', sans-serif;">
+        
+        <!-- Image Section -->
+        <div class="card-img-top d-flex justify-content-center align-items-center" 
+            style="height: 220px; background: rgba(255, 255, 255, 0.15); border-radius: 15px 15px 0 0; overflow: hidden;">
+            <img src="<?php echo !empty($product['photo']) ? htmlspecialchars($product['photo']) : 'default-image.png'; ?>" 
+                alt="Product Image" class="img-fluid" 
+                style="max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 12px;">
         </div>
 
-        <!-- Products List -->
-        <div id="content" class="content">
-            <h3>Available Products</h3>
+        <!-- Card Body -->
+        <div class="card-body p-4">
+            <h4 class="fw-bold" style="color: #d4af37; font-size: 24px;"> 
+                <?php echo htmlspecialchars($product['name']); ?> 
+            </h4>
+            <p class="card-text" style="font-size: 16px; font-weight: 400; color: #f8f8f8; line-height: 1.6;">
+                <?php echo htmlspecialchars($product['description']); ?>
+            </p>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <span class="fw-bold" style="color: #d4af37; font-size: 20px;">₱<?php echo number_format($product['price'], 2); ?></span>
+                <small class="text-light" style="font-size: 14px;">Stock: <?php echo (int) $product['stock']; ?></small>
+            </div>
+        </div>
 
-            <?php
-            $product_types = ['renting'];
-            
-            foreach ($product_types as $type):
-                // Query to fetch products by type and status
-                $product_query = "SELECT * FROM product WHERE product_type = '$type' AND status = 'available'";
-                $product_result = $conn->query($product_query);
-            ?>
+        <!-- Card Footer -->
+        <div class="card-footer bg-transparent border-0 pb-3">
+            <!-- Quantity Section -->
+            <div class="d-flex justify-content-center align-items-center mb-3">
+                <button type="button" class="btn btn-outline-light btn-lg px-3 py-1" onclick="decreaseQuantity(this)">-</button>
+                <input type="number" name="quantity" value="1" min="1" max="<?php echo (int) $product['stock']; ?>" 
+                    class="form-control text-center mx-2" 
+                    style="width: 60px; font-size: 18px; font-weight: 600; text-align: center;">
+                <button type="button" class="btn btn-outline-light btn-lg px-3 py-1" onclick="increaseQuantity(this)">+</button>
+            </div>
 
-            <h4 class="mt-4 text-capitalize"><?php echo htmlspecialchars($type); ?> Products</h4>
-            <ul class="list-group">
-                <?php if ($product_result->num_rows > 0): ?>
-                    <?php while ($product = $product_result->fetch_assoc()): ?>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <!-- Product Image -->
-                                <img src="<?php echo !empty($product['photo']) ? htmlspecialchars($product['photo']) : 'default-image.png'; ?>" 
-                                    alt="Product Image" 
-                                    class="img-thumbnail me-3" 
-                                    style="width: 100px; height: 100px; object-fit: cover;">
+          <!-- Rent Now Button -->
+<?php if (isset($_SESSION['username']) && $product['stock'] > 0): ?>
+    <form action="#" method="POST" class="d-inline">
+        <input type="hidden" name="product_id" value="<?php echo $product['product_id']; ?>">
+        <button type="button" class="btn btn-warning w-100 fw-bold btn-lg rent-now-btn" 
+            style="background: white; border-radius: 12px; font-size: 18px;"
+            data-bs-toggle="modal" 
+            data-bs-target="#rentalModal"
+            data-product-id="<?php echo $product['product_id']; ?>"
+            data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
+            data-product-price="<?php echo number_format($product['price'], 2); ?>">
+            Rent Now
+        </button>
+    </form>
+<?php else: ?>
+    <button class="btn btn-secondary w-100 btn-lg" disabled 
+        style="border-radius: 12px; font-size: 18px;">
+        Out of Stock
+    </button>
+<?php endif; ?>
 
-                                <!-- Product Details -->
-                                <div>
-                                    <strong><?php echo htmlspecialchars($product['name']); ?></strong><br>
-                                    <?php echo htmlspecialchars($product['description']); ?><br>
-                                    Price: ₱<?php echo number_format($product['price'], 2); ?><br>
-                                    Stock: <?php echo (int) $product['stock']; ?><br>
-                                    Status: <span class="text-success">Available</span>
-                                </div>
-                            </div>
-
-                                                <!-- Add to Cart Form -->
-                        <?php if (isset($_SESSION['username']) && $product['stock'] > 0): ?>
-                            <form action="/php/add_to_cart.php" method="POST" class="d-inline">
-                                <input type="hidden" name="product_id" value="<?php echo $product['product_id']; ?>">
-                                <button type="submit" name="add_to_cart" class="btn btn-primary">Rent Now</button>
-                            </form>
-                        <?php else: ?>
-                            <button class="btn btn-secondary" disabled>Out of Stock</button>
-                        <?php endif; ?>
-
-                        </li>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <li class="list-group-item">No <?php echo htmlspecialchars($type); ?> products available.</li>
-                <?php endif; ?>
-            </ul>
-
-            <?php endforeach; ?>
         </div>
     </div>
-</section>
+</div>
 
-    <script>
+
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <li>No <?php echo htmlspecialchars($type); ?> products available.</li>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+<!-- Rental Modal -->
+
+
+<div class="modal fade" id="rentalModal" tabindex="-1" aria-labelledby="rentalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rentalModalLabel">Confirm Rental</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rentalForm">
+                    <input type="hidden" id="product_id" name="product_id">
+                    <p id="product_details"></p>
+
+                    <!-- Address Selection -->
+                    <label for="address">Select Address:</label>
+                    <select id="address" name="address" class="form-control" required>
+                        <option value="">-- Select Address --</option>
+                        <?php foreach ($addresses as $address) { ?>
+                            <option value="<?= $address['address_id'] ?>">
+                                <?= htmlspecialchars($address['barangay'] . ', ' . $address['street'] . ' (Landmark: ' . $address['landmark'] . ')') ?>
+                            </option>
+                        <?php } ?>
+                    </select>
+                    <br>
+
+                    <!-- Rental Days -->
+                    <label for="rental_duration">Number of Days:</label>
+                    
+                    <input type="number" id="rental_duration" name="rental_duration" class="form-control" min="1" required>
+                    <label for="rental_start">Start Date:</label>
+                        <input type="date" id="rental_start" name="rental_start" class="form-control" required>
+                        <br>
+
+                
+                    <br>
+
+                    <button type="submit" class="btn btn-primary">Confirm Rent</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Adjust Rent Now buttons in product list -->
+<button type="button" class="btn btn-primary rent-now-btn" 
+    data-product-id="<?php echo $product['product_id']; ?>" 
+    data-product-name="<?php echo htmlspecialchars($product['name']); ?>" 
+    data-product-price="<?php echo number_format($product['price'], 2); ?>">
+    Rent Now
+</button>
+
+
+<!-- JavaScript to trigger modal and fetch product data -->
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+    const rentNowButtons = document.querySelectorAll('.rent-now-btn');
+    const rentalModal = new bootstrap.Modal(document.getElementById("rentalModal"));
+    const rentalForm = document.getElementById("rentalForm");
+
+    // Open modal and populate details
+    rentNowButtons.forEach(button => {
+        button.addEventListener("click", function () {
+            const productId = this.getAttribute("data-product-id");
+            const productName = this.getAttribute("data-product-name");
+            const productPrice = this.getAttribute("data-product-price");
+
+            document.getElementById("product_id").value = productId;
+            document.getElementById("product_details").innerHTML = 
+                `<strong>${productName}</strong><br>Price: ₱${productPrice}`;
+
+            rentalModal.show();
+        });
+    });
+
+    // Handle rental form submission
+    rentalForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const formData = new FormData(rentalForm);
+
+        fetch("/php/rental_process.php", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json()) // Parse JSON response
+        .then(data => {
+            if (data.status === "success") {
+                alert(data.message);
+                rentalModal.hide();
+                location.reload();
+            } else {
+                alert("Error: " + (data.message || "Something went wrong."));
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("An error occurred. Please try again.");
+        });
+    });
+
+    // Clear modal on close
+    document.getElementById("rentalModal").addEventListener("hidden.bs.modal", function () {
+        rentalForm.reset(); // Reset all input fields
+        document.getElementById("product_details").innerHTML = "";
+    });
+});
+
+
+
         document.addEventListener("DOMContentLoaded", function () {
     let form = document.getElementById("add-to-cart-form");
     let button = document.querySelector(".add-to-cart-btn");
@@ -236,7 +616,7 @@ if (isset($_GET['logout'])) {
             // Disable button to prevent multiple clicks
             button.disabled = true;
 
-            fetch("/xampp/htdocs/WaterRefillingSystem/php/add_to_cart.php", { // Call the new PHP handler
+            fetch("rentnot.php", { // Call the new PHP handler
                 method: "POST",
                 body: formData
             })

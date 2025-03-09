@@ -57,23 +57,28 @@ if (isset($_POST['add_to_cart'])) {
     }
 }
 
-$sql = "SELECT address_id, barangay, street, landmark FROM address WHERE user_id = ?";
-$stmt = $conn->prepare($sql);
+
+$user_query = "SELECT u.username, a.street, a.barangay, a.landmark, a.note
+               FROM user u
+               LEFT JOIN address a ON u.user_id = a.user_id
+               WHERE u.user_id = ?";
+$stmt = $conn->prepare($user_query);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
+$user_data = $result->fetch_assoc() ?? [];
 
-if ($row = $result->fetch_assoc()) {
-    $address_id = $row['address_id'];
-    $barangay = $row['barangay'];
-    $street = $row['street'];
-    $landmark = $row['landmark'];
-    $address = "{$street}, {$barangay}, Landmark: {$landmark}";
-} else {
-    $address_id = null;
-    $barangay = $street = $landmark = '';
-    $address = "No address found.";
-}
+// Format user details
+$username = htmlspecialchars($user_data['username'] ?? 'Guest');
+$address_parts = array_filter([
+    $user_data['street'] ?? '',
+    $user_data['barangay'] ?? '',
+    !empty($user_data['landmark']) ? "Landmark: {$user_data['landmark']}" : '',
+    !empty($user_data['note']) ? "Note: {$user_data['note']}" : ''
+]);
+$address = !empty($address_parts) ? implode(', ', $address_parts) : 'No address provided';
+
+
 
 // Handle processing the order
 if (isset($_POST['process_order']) && !empty($_SESSION['cart'])) {
@@ -133,7 +138,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 
-$total_price = $row['total_price'] ?? 0; // Default to 0 if cart is empty
+$total_price = 0;
 
 // Check if user has an address
 $sql_check_address = "SELECT * FROM address WHERE user_id = ?";
@@ -171,14 +176,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['place_order'])) {
               </script>";
     }
 }
-// Fetch cart count
-$cart_query = "SELECT SUM(quantity) AS total_items FROM cart WHERE user_id = ?";
-$stmt = $conn->prepare($cart_query);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$cart_data = $result->fetch_assoc();
-$cart_count = $cart_data['total_items'] ?? 0;
+
 
 // Handle logout
 if (isset($_GET['logout'])) {
@@ -198,8 +196,54 @@ if (isset($_GET['remove_cart_id'])) {
     header("Location: cart.php");
     exit();
 }
-?>
 
+// Fetch cart items
+// Fetch the number of unique products in the cart
+$cart_query = "SELECT COUNT(DISTINCT product_id) AS total_products FROM cart WHERE user_id = ?";
+$stmt = $conn->prepare($cart_query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$cart_data = $result->fetch_assoc();
+$cart_count = $cart_data['total_products'] ?? 0;
+
+// Fetch cart items with product details
+$cart_query = "SELECT c.product_id, c.quantity, p.name AS product_name, p.price 
+               FROM cart c 
+               JOIN product p ON c.product_id = p.product_id 
+               WHERE c.user_id = ?";
+$stmt = $conn->prepare($cart_query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$cartItems = $result->fetch_all(MYSQLI_ASSOC);
+
+// Update session with cart items
+$stmt = $conn->prepare("SELECT product_id, quantity FROM cart WHERE user_id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$_SESSION['cart'] = [];
+while ($row = $result->fetch_assoc()) {
+    $_SESSION['cart'][$row['product_id']] = $row['quantity'];
+}
+
+// Calculate total price
+$total_price = array_reduce($cartItems, function($sum, $item) {
+    return $sum + ($item['price'] * $item['quantity']);
+}, 0);
+
+// Fetch user addresses
+$addresses = [];
+$stmt = $conn->prepare("SELECT address_id, barangay, street, landmark , note FROM address WHERE user_id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$addresses = $result->fetch_all(MYSQLI_ASSOC);
+
+?>
 
 
 <!DOCTYPE html>
@@ -208,311 +252,1092 @@ if (isset($_GET['remove_cart_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart - POS System</title>
-    <link rel = "stylesheet" href = "https://unicons.iconscout.com/release/v4.0.0/css/line.css"/>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css"/>
+                               <!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: black; color: #d4af37; font-family: 'Poppins', sans-serif; }
-        .sidebar { background-color: black; height: 100vh; width: 260px; position: fixed; padding-top: 20px; color: #d4af37; }
-        .sidebar a { color: #d4af37; padding: 15px; text-decoration: none; display: block; transition: background 0.3s; }
-        .sidebar a:hover, .sidebar a.active { background: rgba(230, 227, 227, 0.2); border-radius: 5px; }
-        .main-content { margin-left: 270px; padding: 30px; }
-        .navbar { background-color: black; color: #d4af37; width: 100%; padding: 15px; text-align: center; }
-        .cart-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-        .cart-item { background-color: #000; border-radius: 10px; padding: 15px; width: 250px; text-align: center; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2); }
-        .product-image { width: 100%; height: 200px; object-fit: contain; border-radius: 5px; }
-        .remove-btn { background-color: red; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; display: inline-block; margin-top: 10px; }
-        body { background-color:rgb(0, 0, 0);  color: #d4af37; font-family: 'Poppins', sans-serif; }
-        .sidebar {  background-color: black;  height: 100vh; width: 260px; position: fixed; padding-top: 20px; color: #d4af37; box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1); }
-        .sidebar a { color: #d4af37; padding: 15px; text-decoration: none; display: block; transition: background 0.3s; }
-        .sidebar a:hover, .sidebar a.active { background: rgba(230, 227, 227, 0.2); border-radius: 5px; }
-        .main-content { margin-left: 270px; padding: 30px; }
-        .navbar {     display: inline-flex;justify-content: center; background-color: black; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); color: #d4af37;  position: fixed; width: 100%; margin-left: -40px; margin-top: -30px;}
-        .product-container { display: flex; flex-wrap: wrap; gap: 30px; }
-        .product-item { margin-top: 500px;background: #333; padding: 15px; max-width: 30%; margin: 10px 0; border-radius: 5px; box-shadow: 0 2px 4px rgba(255, 255, 255, 0.59); color: #d4af37; }
-        .product-image { width: 100%; height: 200px; object-fit: contain; border-radius: 5px; }
-        
-        .list-group{
-         
-            max-width: 135vh;
-            gap: 15px;
+       body {
+            background-color: #353544;
+            color:white;
+            font-family: 'Poppins', sans-serif;
         }
-        .content{
-            display: flexbox list-item ;
-        flex-wrap: nowrap;
+        .sidebar {
+            background-color: #1e1e2f;
+            height: 100vh;
+            width: 260px;
+            position: fixed;
+            padding-top: 20px;
+            color: white;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar a {
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            display: block;
+            transition: background 0.3s;
+        }
+        .sidebar a:hover, 
+    .sidebar a.active {
+        font-weight: 400;
+        line-height: 1.6;
+        font-size: 18px;
+        color: gold;
+        background: rgba(230, 227, 227, 0.2);
+        border-radius: 5px;
+    }
+        .main-content {
+            margin-left: 270px;
+            padding: 30px;
+        }
+        .navbar {
+            display: flex;
             justify-content: center;
-            margin-top: 100px;
-            
-        } .content h2{
-            align-self: center;
-            gap: 30px;
+            background-color: black;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            color: #d4af37;
+            position: fixed;
+            width: calc(100% - 270px);
+            top: 0;
+            left: 270px;
+            padding: 8px;
+            text-align: center;
         }
+        .cart-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 80px;
+        }
+        .cart-item {
+            background-color: #222;
+            border-radius: 10px;
+            padding: 15px;
+            width: 250px;
+            text-align: center;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+        .btn-danger {
+            background-color: red;
+            color: white;
+            border-radius: 5px;
+        }
+        .place-order-btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
         .logo{
         width: 40px;  /* Adjust size as needed */
         height: auto;
         gap: 2px;
         margin-right: 20px; 
         }
-        .Jz_Waters{
-            font-size: 26px;
-            font-style: sans-serif, arial;
-        }
-        .nav_logo{
-            gap: 5px;
-        }
+
+        
         .log{
             
             color:rgb(243, 243, 243);
         }
-        .home{
-         position: relative;
-    background-color: rgba(0,0,0,0.6);
-    height: 1000px;
-    width: 100%;
-    /* background-image: url(/WaterRefillingSystem/images/bg-3.jpg); */
-    background-size: cover;
-    background-position: center;
-        }
-        .modal-backdrop.show{
-          opacity: 1;
-        }
+        .cart-summary {
+        position: fixed;
+        bottom: 50px;
+        left: 57%;
+        transform: translateX(-50%);
+        width: 1000px;
+        background: #222;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+        text-align: center;
+    }
+    .cart-summary h4 {
+        margin-bottom: 10px;
+    }
+    .place-order-btn {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .ss{
+     display: flex;
+     justify-content: center;
+     margin-top:50px;
+     margin-left: 30px;
+      max-width:70%;
+    }
+    .n{
+      color: gold;
+      font-size: 18px;
+    }
+    /* General Modal Styling */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  color: gold;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-dialog {
+  background: #1e1e2f;
+  border-radius: 10px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0px 5px 15px rgba(241, 240, 240, 0.51);
+  overflow: hidden;
+}
+
+.modal-backdrop{
+  --bs-backdrop-zindex: 1050;
+  --bs-backdrop-bg: #000;
+  --bs-backdrop-opacity: 0;
+  z-index: 0;
+}
+
+/* Header Styling */
+.modal-header {
+  background:rgb(36, 40, 44);
+  color: black;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: black;
+  cursor: pointer;
+}
+
+/* Modal Body */
+.modal-body {
+  padding: 20px;
+  font-size: 1em;
+  color: white;
+}
+
+/* Form Styling */
+.form-group {
+  margin-bottom: 15px;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+select.form-control {
+  appearance: none;
+  background: #f8f9fa;
+  cursor: pointer;
+}
+
+/* Cart Items Styling */
+.list-group {
+  list-style: none;
+  padding: 0;
+}
+
+.list-group-item {
+  background: #f8f9fa;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+  border-left: 6px solid #007bff;
+}
+
+/* Confirm Order Button */
+#confirmOrderBtn {
+  width: 100%;
+  padding: 12px;
+  background: #FFFFF0;
+  color: black;
+  border: none;
+  font-size: 1em;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#confirmOrderBtn:hover {
+  background:#284387;
+  color:  #FFFFF0;
+}
+
+/* Update Address Button */
+#updateAddressBtn {
+  display: block;
+  margin-top: 10px;
+  background: #284387;
+  color: #FFFFF0;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#updateAddressBtn:hover {
+  background: #e0a800;
+}
+
+/* Note Styling */
+.note {
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .modal-dialog {
+    max-width: 90%;
+  }
+}
+.logout-btn {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: red;
+        color: black;
+        padding: 10px;
+        text-align: center;
+        border-radius: 20px;
+        width: 80%;
+        text-decoration: none;
+        text-align: center;
+        font-weight: bold;
+    }
+    .uil-shopping-cart{
+        font-size: 24px;
+    }
+
+    /* General Modal Styling */
+.modal {
+  background-color: #1e1e2f;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-dialog {
+  background: #1e1e2f;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 10px rgba(233, 229, 229, 0.47);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-header {
+  background: #FFFFF0;
+  color: black;
+  padding: 15px;
+  font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-content {
+    background: #1e1e2f;
+    color: gold;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(202, 200, 200, 0.3);
+}
+/* Close Button */
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: black  ;
+  cursor: pointer;
+}
+
+/* Address List */
+.list-group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.address-item {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.address-item:hover {
+  background: #f8f9fa;
+}
+
+/* Buttons */
+button {
+  background: #284387;
+  color: #FFFFF0;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.edit-address-btn {
+  background: #284387;
+  color: #FFFFF0;
+}
+
+.delete-address-btn {
+  background: #dc3545;
+  color: white;
+}
+
+/* Edit Address Form */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+label {
+  font-weight: bold;
+}
+
+input[type='text'] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+button[type='submit'] {
+  background: #FFFFF0;
+  color: black;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+}
+button[type='submit'] :hover {
+  background:#284387;
+    color:  #FFFFF0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.x{
+        font-size: 24px;
+    }
+    .user-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .user-icon {
+        cursor: pointer;
+        color: #d4af37;
+        font-size: 1.5rem;
+    }
+
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        background: #232b2b;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        min-width: 120px;
+        overflow: hidden;
+        z-index: 1000;
+    }
+
+    .dropdown-menu a {
+        display: block;
+        padding: 10px;
+        color: #d4af37;
+        text-decoration: none;
+        transition: 0.3s;
+        text-align: center;
+    }
+
+    .dropdown-menu a:hover {
+        background: rgba(230, 227, 227, 0.2);
+    }
     </style>
 </head>
 <body>
-
-    <!-- Sidebar Navigation -->
-    <div class="sidebar text-white">
-    <a href="#" class="nav_logo">
-                <img src="/images/Jz.png" alt="Jz Waters Logo" class="logo">
-                <Strong class="Jz_Waters">Jz Waters</Strong>
-            </a>
-            
-        <a class="uil uil-box" href="dashboard.php" onclick="showProducts()" ><strong class="x">Products</strong></a>
-        <a href="cart.php"  class="uil uil-shopping-cart active">
-             Cart (<span id="cart-count"><?php echo $cart_count; ?></span>)</a>
-        <a href="rental.php" class="uil uil-history log" onclick="showOrderHistory()">Product Rental</a>
-        <a href="order.php" class="uil uil-history log" onclick="showOrderHistory()">Orders</a>
-        <a href="orderhistory.php" class="uil uil-history log" onclick="showOrderHistory()">Order History</a>
-        <a href="settings.php" class="uil uil-cog log" onclick="showOrderHistory()">Settings</a>
-        <a href="/php/logout.php" style ="margin-top: 450px; background-color:red; color: white;"  class="uil uil-signout log1" onclick="confirmLogout()">Logout</a>
+    <div class="sidebar">
+        <a href="#" class="nav_logo">
+            <img src="/images/Jz.png" alt="Jz Waters Logo" class="logo">
+            <strong style="font-size: 24px;" class="Jz_Waters">Jz Waters</strong>
+        </a>
+        <a href="dashboard.php" class="uil uil-box">Products</a>
+        <a href="cart.php" class="uil uil-shopping-cart active"><strong class="n" >Cart(<span id="cart-count"><?php echo $cart_count; ?></span>)</strong></a>
+        <a href="rental.php" class="uil uil-house-user">Product Rental</a>
+        <a href="order.php" class="uil uil-heart-alt">Orders</a>
+        <a href="orderhistory.php" class="uil uil-history">Order History</a>
+        <a href="settings.php" class="uil uil-cog">Settings</a>
+        <a href="/php/logout.php" class="uil uil-signout logout-btn" style="position: absolute; bottom: 20px;">Logout</a>
     </div>
-
+      
     <!-- Main Content -->
-    <div class="main-content">
-        <nav class="navbar">
-            <h2>Your Cart</h2>
-        </nav>
-      <!-- Unified Cart Section -->
-      <section class="cart mt-4">
-    <div id="cart-content">
-        <ul class="list-group">
-            <?php
-            // Fetch cart items from the database
-            $stmt = $conn->prepare("
-                SELECT c.cart_id, c.quantity, p.product_id, p.name, p.price, p.photo
-                FROM cart c
-                JOIN product p ON c.product_id = p.product_id
-                WHERE c.user_id = ?
-            ");
-            $stmt->bind_param("i", $user_id);
-            $stmt->execute();
-            $cart_result = $stmt->get_result();
+       <div class="main-content">
+       <nav class="navbar" style=" margin-top: 20px; color:white; background:#515151; border-radius: 50px; display: flex; align-items: center; justify-content: space-between; padding: 10px 20px;">
+        <!-- Menu Icon on the Left -->
+        <i class="uil uil-bars fs-3" id="menu-icon" style="margin-left: 20px;"></i>
+        
+        <!-- Cart Title in the Center -->
+        <h2 id="page-title" class="uil uil-shopping-cart" style="margin-left: 700px ; text-align: center;"><strong class="x">Cart</strong></h2>
+        
+        <!-- User Icon on the Right -->
+        <div class="user-container" style="margin-left: auto; margin-right: 20px; position: relative;">
+            <i class="uil uil-user fs-3 user-icon" id="userIcon" style="color:white;"></i>
+            <div class="dropdown-menu" id="dropdownMenu" style="position: absolute; right: 0; display: none; background:#515151 ; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                <a href="settings.php">Settings</a>
+                <a href="/php/logout.php" onclick="confirmLogout()">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+          <?php if (isset($_SESSION['message'])): ?>
+                  <div id="notification" style="
+                      background-color: #4caf50; 
+                      color: white; 
+                      padding: 15px; 
+                      position: fixed; 
+                      top: 10px; 
+                      right: 10px; 
+                      width: 30%;
+                      border-radius: 5px; 
+                      z-index: 1000;">
+                      <?= htmlspecialchars($_SESSION['message']); ?>
+                  </div>
+                  <script>
+                      setTimeout(() => {
+                          document.getElementById('notification').style.display = 'none';
+                      }, 2000); // 2 seconds
+                  </script>
+                  <?php unset($_SESSION['message']); ?>
+              <?php endif; ?>
+
+                  
+    
+              <section class="cart mt-4">
+              <div id="cart-content" class="d-flex flex-wrap justify-content-center gap-4" style="margin-top: 80px; margin-left: -130px;">
+    <?php
+    $stmt = $conn->prepare("
+        SELECT c.cart_id, c.quantity, p.product_id, p.name, p.price, p.photo
+        FROM cart c
+        JOIN product p ON c.product_id = p.product_id
+        WHERE c.user_id = ?
+    ");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $cart_result = $stmt->get_result();
+
+    $total_price1= 0; // Initialize total price
+
+    if ($cart_result->num_rows > 0): 
+        while ($cart_item = $cart_result->fetch_assoc()): 
+            $subtotal = $cart_item['quantity'] * $cart_item['price'];
+            $total_price1 += $subtotal;
+    ?>
+        <!-- Cart Item Card -->
+        <div class="card shadow-lg border-0 rounded-3 text-center" 
+            style="box-shadow: 0 4px 12px rgba(255, 255, 255, 0.6); background: #1e1e2f; color: #fff; width: 20%; height: 550px; font-family: 'Poppins', sans-serif;">
             
-            $total_price = 0;
-            if ($cart_result->num_rows > 0) {
-                while ($cart_item = $cart_result->fetch_assoc()) {
-                    $item_total = $cart_item['price'] * $cart_item['quantity'];
-                    $total_price += $item_total;
-            ?>
-                <li class="list-group-item d-flex justify-content-between align-items-center bg-dark text-white">
-                    <img src="<?php echo htmlspecialchars($cart_item['photo']); ?>" alt="Product Image" class="product-image" style="width: 80px; height: 80px; border-radius: 5px;">
-                    <div>
-                        <h5><?php echo htmlspecialchars($cart_item['name']); ?></h5>
-                        <p>Price: ₱<?php echo number_format($cart_item['price'], 2); ?></p>
-                        <label for="quantity_<?php echo $cart_item['cart_id']; ?>">Quantity:</label>
-                        <input type="number" id="quantity_<?php echo $cart_item['cart_id']; ?>" 
-                            class="form-control"
-                            value="<?php echo $cart_item['quantity']; ?>" 
-                            min="1" 
-                            oninput="this.value = Math.max(this.value, 1)"
-                            data-cart-id="<?php echo $cart_item['cart_id']; ?>" 
-                            data-product-id="<?php echo $cart_item['product_id']; ?>" 
-                            style="width: 80px;">
+            <div class="card-img-top d-flex justify-content-center align-items-center" 
+                style="height: 160px; height:200px; background: rgba(255, 255, 255, 0.15); border-radius: 12px 12px 0 0; overflow: hidden;">
+                <img src="<?= htmlspecialchars($cart_item['photo']); ?>" 
+                    alt="Product Image" class="img-fluid" 
+                    style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px;">
+            </div>
 
-
-                    </div>
-                    <a href="cart.php?remove_cart_id=<?php echo $cart_item['cart_id']; ?>" class="btn btn-danger">Remove</a>
-                </li>
-            <?php
-                }
-            } else {
-                echo "<li class='list-group-item text-white bg-dark'>Your cart is empty.</li>";
-            }
-            ?>
-        </ul>
-        <h4 class="mt-3">Total Cart Value: ₱<?php echo number_format($total_price, 2); ?></h4>
+            <div class="card-body p-3 d-flex flex-column justify-content-between">
+    <div>
+        <h4 class="fw-bold" style="color: #d4af37; font-size: 24px;"> 
+            <?= htmlspecialchars($cart_item['name']); ?> 
+        </h4>
+        <p class="mb-2" style="font-size: 20px; font-weight: 500; color: #f8f8f8;">
+            Price: <span style="color: #d4af37;">₱<?= number_format($cart_item['price'], 2); ?></span>
+        </p>
+        <p>Total: <span id="total_<?= $cart_item['cart_id']; ?>">₱<?= number_format($subtotal, 2); ?></span></p>
     </div>
-</section>
 
-<!-- Place Order Button -->
-<button class="btn btn-primary mt-3" id="placeOrderBtn" data-bs-toggle="modal" data-bs-target="#placeOrderModal">
-    Place Order
-</button>
-
-<section class="home" id="home">
-<!-- Place Order Modal -->
-<div class="modal fade" id="placeOrderModal" tabindex="-1" aria-labelledby="placeOrderModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <!-- Header -->
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="placeOrderModalLabel">Confirm Your Order</h5>
-        <button type="button" class="btn-close btn-close-white" id="close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <!-- Body -->
-      <div class="modal-body p-4">
-        <form id="orderForm">
-          <!-- Delivery Address -->
-          <div class="mb-3">
-            <label for="address" class="form-label fw-bold">Delivery Address</label>
-            <?php if ($address): ?>
-              <textarea class="form-control" id="address" name="address" rows="2" readonly><?= htmlspecialchars($address); ?></textarea>
-            <?php else: ?>
-              <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-                + Add Address
-              </button>
-            <?php endif; ?>
-            <!-- Update Address Button -->
-            <button type="button" class="btn btn-info mt-2" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-            Update Address
-          </button>
-
-
-
-          </div>
-
-              
-            <!-- Note -->
-      <div class="mb-3">
-        <label for="orderNote" class="form-label fw-bold">Special Instructions (Optional)</label>
-        <textarea class="form-control" id="orderNote" name="orderNote" rows="2" placeholder="Add any notes for delivery..."></textarea>
-      </div>
-
-
-          <!-- Payment Method -->
-          <div class="mb-3">
-            <label for="paymentMethod" class="form-label fw-bold">Payment Method</label>
-            <select class="form-select" id="paymentMethod" name="paymentMethod" required>
-              <option value="gcash">GCash</option>
-              <option value="cod">Cash on Delivery</option>
-            </select>
-          </div>
-
-          <!-- Order Summary -->
-          <div class="mb-3">
-            <h6 class="fw-bold mb-3">Order Summary</h6>
-            <ul id="orderSummary" class="list-group border rounded">
-              <!-- Items will be dynamically added here -->
-            </ul>
-            <p class="mt-3 text-end fs-5">
-    <strong>Total:</strong> ₱<span id="orderTotal">0.00</span>
-</p>
-
-<!-- Hidden input for form submission -->
-<input type="hidden" id="totalPrice" name="total_price" value="0">
-          </div>
-
-         <!-- Confirm Order Button -->
-         <div class="text-center">
-               <button type="submit" class="btn btn-success w-100 py-2">Confirm Order</button>
-             </div>
-        </form>
-      </div>
+    <!-- Quantity Section at Bottom Center -->
+    <div class="d-flex justify-content-center align-items-center mt-auto">
+        <button class="btn btn-outline-light btn-lg px-3 py-1" 
+            onclick="updateQuantity(<?= $cart_item['cart_id']; ?>, -1)">-</button>
+        <input type="number" id="quantity_<?= $cart_item['cart_id']; ?>"
+            class="form-control text-center mx-2"
+            value="<?= $cart_item['quantity']; ?>" 
+            min="1" 
+            oninput="this.value = Math.max(this.value, 1)"
+            data-cart-id="<?= $cart_item['cart_id']; ?>" 
+            data-product-id="<?= $cart_item['product_id']; ?>" 
+            style="width: 60px; font-size: 20px; font-weight: 600; text-align: center;">
+        <button class="btn btn-outline-light btn-lg px-3 py-1" 
+            onclick="updateQuantity(<?= $cart_item['cart_id']; ?>, 1)">+</button>
     </div>
-  </div>
 </div>
+
+
+            <div class="card-footer bg-transparent border-0 pb-3">
+                <a href="cart.php?remove_cart_id=<?= $cart_item['cart_id']; ?>" 
+                    class="btn btn-danger w-100 fw-bold btn-lg" 
+                    style="border-radius: 10px; font-size: 20px;">Remove</a>
+            </div>
+        </div>
+    <?php endwhile; ?>
+    <?php else: ?>
+        <div class='alert alert-warning text-center w-50' style='font-size: 20px;  font-family: "Poppins", sans-serif; margin-left: 100px; margin-top: 20px;'>
+            Your cart is empty.
+        </div>
+    <?php endif; ?>
+</div>
+
+<!-- Cart Summary -->
+<div class="cart-summary text-center mt-4">
+    <h4>Total Price: ₱<span id="total-price"><?= number_format($total_price, 2); ?></span></h4>
+    <button class="btn btn-success btn-lg mt-2" id="placeOrderBtn" data-bs-toggle="modal" data-bs-target="#placeOrderModal">
+        Place Order
+    </button>
+</div>
+
+</section>  
+
+  <div id="notification" style="
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 1000;
+  ">
+    Notification message here!
+  </div>
+
+
+
+  <section class="home" id="home">
+    <!-- Place Order Modal -->
+    <div class="modal" id="placeOrderModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <!-- Header -->
+          <div class="modal-header">
+            <h5 class="modal-title">Confirm Your Order</h5>
+            <button type="button" class="close-btn" id="close">&times;</button>
+          </div>
+
+          <!-- Body -->
+          <div class="modal-body">
+            <form id="orderForm">
+              <!-- Cart Items -->
+              <h6>Your Cart:</h6>
+              <ul id="cartItems" class="list-group">
+                <?php 
+                  $totalPrice = 0;
+                  foreach ($cartItems as $item) {
+                    $productName = htmlspecialchars($item['product_name']);
+                    $quantity = $item['quantity'];
+                    $price = $item['price'];
+                    $subtotal = $quantity * $price;
+                    $totalPrice += $subtotal;
+                ?>
+                  <li class="list-group-item">
+                    <?= $productName ?> - <?= $quantity ?> ₱<?= number_format($price, 2) ?>
+                  </li>
+                <?php } ?>
+              </ul>
+
+              <!-- Total Price -->
+              <div class="form-group">
+                <label for="totalPrice"><strong>Total Price:</strong></label>
+                <input type="text" id="totalPrice" name="totalPrice" value="₱<?= number_format($totalPrice, 2) ?>" readonly class="form-control">
+              </div>
+
+              <!-- Delivery Address -->
+              <div class="form-group">
+                <label for="address">Select Address:</label>
+                <select id="address" name="address" class="form-control" required onchange="updateAddressNote()">
+                  <option value="">-- Select Address --</option>
+                  <?php foreach ($addresses as $address) { 
+                      $note = isset($address['note']) && $address['note'] !== '' ? htmlspecialchars($address['note']) : '';
+                  ?>
+                    <option value="<?= $address['address_id'] ?>" data-note="<?= $note ?>">
+                      <?= htmlspecialchars($address['barangay'] . ', ' . $address['street'] . ' (Landmark: ' . $address['landmark'] . ')') ?>
+                    </option>
+                  <?php } ?>
+                </select>
+                <button type="button" id="updateAddressBtn">Update Address</button>
+              </div>
+
+              <!-- Address Note Field -->
+              <div class="form-group">
+                <label for="addressNote"><strong>Address Note:</strong></label>
+                <input type="text" id="addressNote" name="addressNote" class="form-control" placeholder="Select an address to view or edit the note">
+              </div>
+
+              <!-- Payment Method -->
+              <div class="form-group">
+                <label for="paymentMethod">Payment Method:</label>
+                <select id="paymentMethod" name="paymentMethod" class="form-control" required>
+                  <option value="gcash">GCash</option>
+                  <option value="cod">Cash on Delivery</option>
+                </select>
+              </div>
+
+                <!-- Confirm Order -->
+                <button type="submit" id="confirmOrderBtn">Confirm Order</button>
+
+              <!-- General Note -->
+              <p class="note" style="margin-top: 10px; font-size: 0.9em; color:  #FFFFF0;">
+                <strong>Note:</strong> Please double-check your address and payment method before confirming your order.
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
 
 
 <!-- Manage Address Modal -->
-<div class="modal fade" id="manageAddressModal" tabindex="-1" aria-labelledby="manageAddressModalLabel" aria-hidden="true">
+<div class="modal" id="manageAddressModal">
   <div class="modal-dialog">
     <div class="modal-content">
-      <!-- Header -->
       <div class="modal-header bg-info text-white">
-        <h5 class="modal-title" id="manageAddressModalLabel">Manage Addresses</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title">Manage Addresses</h5>
+        <button type="button" class="close-btn" id="closeManageAddressModal">&times;</button>
       </div>
 
-      <!-- Body -->
       <div class="modal-body">
         <ul id="addressList" class="list-group">
-          <!-- Addresses will be dynamically listed here -->
+          <?php if (isset($addresses) && is_array($addresses) && count($addresses) > 0): ?>
+            <?php foreach ($addresses as $address): ?>
+              <li class="list-group-item address-item" data-id="<?= htmlspecialchars($address['address_id']) ?>">
+                <?= htmlspecialchars($address['barangay'] . ', ' . $address['street'] . ' (Landmark: ' . $address['landmark'] . ')') ?>
+                <button class="edit-address-btn" 
+                        data-id="<?= $address['address_id'] ?>" 
+                        data-barangay="<?= $address['barangay'] ?>" 
+                        data-street="<?= $address['street'] ?>" 
+                        data-landmark="<?= $address['landmark'] ?>">
+                  Edit
+                </button>
+                <button class="delete-address-btn" data-id="<?= $address['address_id'] ?>">Remove</button>
+              </li>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <li class="list-group-item">No address found.</li>
+          <?php endif; ?>
         </ul>
-
-        <!-- Button to open Add Address Modal -->
-        <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-          Add New Address
-        </button>
       </div>
     </div>
   </div>
 </div>
-</section>
 
-<section>
-<!-- Add Address Modal (Moved Outside) -->
-<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+<!-- Edit Address Modal -->
+<div class="modal" id="editAddressModal" style="display: none;">
   <div class="modal-dialog">
     <div class="modal-content">
-      <!-- Header -->
-      <div class="modal-header bg-secondary text-white">
-        <h5 class="modal-title" id="addAddressModalLabel">Add Your Address</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Address</h5>
+        <button type="button" id="closeEditAddressModal">&times;</button>
       </div>
-
-      <!-- Body -->
       <div class="modal-body">
-        <form id="addAddressForm">
-          <div class="mb-3">
-            <label for="barangay" class="form-label">Barangay</label>
-            <input type="text" class="form-control" id="barangay" name="barangay" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="street" class="form-label">Street</label>
-            <input type="text" class="form-control" id="street" name="street" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="landmark" class="form-label">Landmark</label>
-            <input type="text" class="form-control" id="landmark" name="landmark" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="note" class="form-label">Note</label>
-            <textarea class="form-control" id="note" name="note" rows="3" placeholder="Additional details (optional)"></textarea>
-          </div>
-
-          <button type="submit" class="btn btn-primary w-100">Save Address</button>
+        <form id="editAddressForm" method="POST">
+          <input type="hidden" id="editAddressId" name="address_id">
+          <label for="editBarangay">Barangay:</label>
+          <input type="text" id="editBarangay" name="barangay" required>
+          <label for="editStreet">Street:</label>
+          <input type="text" id="editStreet" name="street" required>
+          <label for="editLandmark">Landmark:</label>
+          <input type="text" id="editLandmark" name="landmark" required>
+          <button type="submit">Save Changes</button>
         </form>
       </div>
     </div>
   </div>
 </div>
-</section>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" crossorigin="anonymous"></script>
 <script>
+
+
+document.getElementById("userIcon").addEventListener("click", function () {
+        let dropdown = document.getElementById("dropdownMenu");
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", function (event) {
+        let dropdown = document.getElementById("dropdownMenu");
+        let userIcon = document.getElementById("userIcon");
+        if (!userIcon.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.style.display = "none";
+        }
+    });
+function confirmLogout() {
+         var logoutModal = new bootstrap.Modal(document.getElementById("logoutModal"));
+         logoutModal.show();
+            }
+
+function updateQuantity(cartId, change) {
+    let quantityInput = document.getElementById("quantity_" + cartId);
+    let newValue = parseInt(quantityInput.value) + change;
+    if (newValue >= 1) {
+        quantityInput.value = newValue;
+    }
+}
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const orderForm = document.getElementById("orderForm");
+
+    if (orderForm) {
+        orderForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            // Get total price
+            const totalPriceInput = document.getElementById("totalPrice");
+            const totalPrice = parseFloat(totalPriceInput.value.replace('₱', '').trim());
+
+            if (isNaN(totalPrice) || totalPrice <= 0) {
+                alert("Invalid total price. Please check your order.");
+                return;
+            }
+
+            const formData = new FormData(orderForm);
+
+            try {
+                const response = await fetch("/php/place_order.php", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const text = await response.text();
+                console.log('Raw response:', text); // For debugging
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (jsonError) {
+                    throw new Error("Invalid JSON response from server.");
+                }
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "Failed to place order.");
+                }
+
+                alert(data.message || "Order placed successfully!");
+                location.reload();
+            } catch (error) {
+                console.error("Error:", error.message);
+                alert(error.message || "An error occurred while placing your order.");
+            }
+        });
+    }
+});
+
+
+  function updateAddressNote() {
+    const addressSelect = document.getElementById('address');
+    const noteInput = document.getElementById('addressNote');
+    const selectedOption = addressSelect.options[addressSelect.selectedIndex];
+    const note = selectedOption.getAttribute('data-note');
+
+    noteInput.value = note || ''; // Show empty string if no note is available
+  }
+
+  function fetchAddressNote() {
+    const addressSelect = document.getElementById('address');
+    const selectedOption = addressSelect.options[addressSelect.selectedIndex];
+    const note = selectedOption.dataset.note || 'No note available';
+    document.getElementById('addressNote').value = note;
+  }
+
+// Show Place Order modal
+document.getElementById('placeOrderBtn').addEventListener('click', () => {
+  document.getElementById('placeOrderModal').style.display = 'block';
+});
+
+// Close Place Order modal
+document.getElementById('close').addEventListener('click', () => {
+  document.getElementById('placeOrderModal').style.display = 'none';
+});
+
+// Show Manage Address modal
+document.getElementById('updateAddressBtn').addEventListener('click', () => {
+  document.getElementById('manageAddressModal').style.display = 'block';
+});
+
+// Close Manage Address modal
+document.getElementById('closeManageAddressModal').addEventListener('click', () => {
+  document.getElementById('manageAddressModal').style.display = 'none';
+});
+
+// Select address and update dropdown
+document.querySelectorAll('.address-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const selectedAddress = item.textContent.trim();
+    const addressId = item.getAttribute('data-id');
+
+    const addressDropdown = document.getElementById('address');
+    addressDropdown.innerHTML = `<option value="${addressId}">${selectedAddress}</option>`;
+    document.getElementById('manageAddressModal').style.display = 'none';
+  });
+});
+
+
+function updateQuantity(cartId, change) {
+    let quantityInput = document.getElementById("quantity_" + cartId);
+    if (!quantityInput) {
+        console.error(`Quantity input not found for cartId: ${cartId}`);
+        return;
+    }
+
+    let maxStock = parseInt(quantityInput.dataset.stock);
+    let productId = quantityInput.dataset.productId;
+    let newQuantity = parseInt(quantityInput.value) + change;
+
+    // Prevent negative or zero values
+    if (newQuantity < 1) {
+        alert("Quantity must be at least 1.");
+        newQuantity = 1;
+    }
+
+    // Prevent exceeding stock
+    if (newQuantity > maxStock) {
+        alert("Not enough stock available!");
+        newQuantity = maxStock;
+    }
+
+    fetch('/php/update_cart.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            cart_id: cartId,
+            product_id: productId,
+            quantity: newQuantity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            quantityInput.value = newQuantity; // Update input field
+            location.reload();
+            // Update total item price if element exists
+            let totalElement = document.getElementById("total_" + cartId);
+            if (totalElement) {
+                totalElement.innerText = `₱${data.new_total}`;
+            } else {
+                console.warn(`Element total_${cartId} not found`);
+            }
+
+            // Update overall cart total if element exists
+            let totalPriceElement = document.getElementById("total-price");
+            if (totalPriceElement) {
+                totalPriceElement.innerText = `${data.total_price}`;
+            } else {
+                console.warn("Total price element not found");
+            }
+        } else {
+            alert(data.message);
+            quantityInput.value = parseInt(quantityInput.value); // Reset to valid value
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("Error updating quantity. Please try again.");
+    });
+}
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Show Edit Address modal
+  document.getElementById('editAddressForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+
+    fetch('update_address.php', {
+      method: 'POST',
+      body: formData
+    }).then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Address updated successfully!');
+          location.reload();
+        } else {
+          alert('Failed to update address.');
+        }
+      }).catch(error => console.error('Error:', error));
+  });
+
+  // Close Edit Address modal
+  document.getElementById('closeEditAddressModal').addEventListener('click', () => {
+    document.getElementById('editAddressModal').style.display = 'none';
+  });
+
+  // Handle address list interactions
+  const addressList = document.getElementById('addressList');
+
+  if (addressList) {
+    addressList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('edit-address-btn')) {
+        const button = e.target;
+        document.getElementById('editAddressId').value = button.dataset.id;
+        document.getElementById('editBarangay').value = button.dataset.barangay;
+        document.getElementById('editStreet').value = button.dataset.street;
+        document.getElementById('editLandmark').value = button.dataset.landmark;
+
+        document.getElementById('editAddressModal').style.display = 'block';
+      }
+
+      if (e.target.classList.contains('delete-address-btn')) {
+        const addressId = e.target.dataset.id;
+        if (confirm('Are you sure you want to remove this address?')) {
+          fetch('delete_address.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `address_id=${addressId}`
+          }).then(response => response.text())
+            .then(data => {
+              if (data.trim() === 'success') {
+                alert('Address removed successfully!');
+                e.target.closest('li').remove();
+              } else {
+                alert('Failed to remove address.');
+              }
+            }).catch(error => console.error('Error:', error));
+        }
+      }
+    });
+  } else {
+    console.error('Error: #addressList not found.');
+  }
+});
+
+
+
+
+// Select an address from the Manage Address modal
+document.querySelectorAll('.address-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const selectedAddress = item.textContent.trim();
+    const addressId = item.getAttribute('data-id');
+
+    const addressDropdown = document.getElementById('address');
+    addressDropdown.innerHTML = `<option value="${addressId}">${selectedAddress}</option>`;
+    document.getElementById('manageAddressModal').style.display = 'none';
+  });
+});
+
+
+    document.getElementById('addressList').addEventListener('click', (e) => {
+        if (e.target.classList.contains('select-address')) {
+            const selectedAddress = e.target.getAttribute('data-address');
+            const selectedAddressId = e.target.getAttribute('data-address-id');
+            const addressDropdown = document.getElementById('address');
+            addressDropdown.innerHTML = `<option value="${selectedAddressId}" selected>${selectedAddress}</option>`;
+            const manageAddressModal = bootstrap.Modal.getInstance(document.getElementById('manageAddressModal'));
+            manageAddressModal.hide();
+        }
+    });
+
+    document.getElementById('addAddressForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const barangay = document.getElementById('barangay').value;
+        const street = document.getElementById('street').value;
+        const landmark = document.getElementById('landmark').value;
+        const newAddress = `${barangay}, ${street} (Landmark: ${landmark})`;
+        const newAddressId = Date.now();
+
+        const addressList = document.getElementById('addressList');
+        addressList.innerHTML += `<li class="list-group-item">
+            ${newAddress}
+            <button class="btn btn-sm btn-secondary select-address" data-address-id="${newAddressId}" data-address="${newAddress}">Select</button>
+        </li>`;
+
+        document.getElementById('addAddressForm').reset();
+        const addAddressModal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
+        addAddressModal.hide();
+    });
+//dss
 
 document.querySelectorAll('input[type=number]').forEach(input => {
     input.addEventListener('change', function() {
@@ -522,6 +1347,7 @@ document.querySelectorAll('input[type=number]').forEach(input => {
         }
     });
 });
+
 document.addEventListener("DOMContentLoaded", function () {
     const orderForm = document.getElementById("orderForm");
 
@@ -990,43 +1816,7 @@ document.getElementById('placeOrderBtn').addEventListener('click', function() {
   });
 
     
-    // Handle quantity change via AJAX
-    document.querySelectorAll('.quantity-input').forEach(input => {
-        input.addEventListener('change', function () {
-            let cartId = this.dataset.cartId;
-            let productId = this.dataset.productId;
-            let newQuantity = parseInt(this.value);
-            let maxStock = parseInt(this.dataset.stock);
-
-            if (newQuantity <= 0) {
-                alert("Quantity must be at least 1.");
-                this.value = 1;
-                return;
-            }
-
-            if (newQuantity > maxStock) {
-                alert("Not enough stock available!");
-                this.value = maxStock;
-                return;
-            }
-
-            fetch('/php/update_cart.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cart_id: cartId, product_id: productId, quantity: newQuantity })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    document.getElementById('total_' + cartId).textContent = "₱" + data.new_total;
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        });
-    });
-
+    
 
 document.getElementById('placeOrderBtn').addEventListener('click', function () {
     fetch('/php/get_cart_items.php') // Fetch cart items from database

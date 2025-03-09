@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-ob_clean(); // Clears any previous output (like HTML errors)
+ob_clean();
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require 'dbconnect.php';
 
 if (!isset($_SESSION['user_id'])) {
-    echo json_encode(["success" => false, "message" => "Session error: user not logged in."]);
+    echo json_encode(["success" => false, "message" => "User not logged in."]);
     exit;
 }
 
@@ -21,41 +21,30 @@ if (!$conn) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_id = $_SESSION['user_id'];
+    $order_date = date('Y-m-d');
+    $total = 0;
 
-    // Fetch cart items with product prices and costs
-    $cartQuery = $conn->prepare("
-        SELECT c.product_id, c.quantity, m.price, m.cost
-        FROM cart c
-        JOIN product m ON c.product_id = m.product_id
-        WHERE c.user_id = ?
-    ");
+    // Fetch cart items with product prices and stock
+    $cartQuery = $conn->prepare("SELECT c.product_id, c.quantity, p.price, p.stock FROM cart c JOIN product p ON c.product_id = p.product_id WHERE c.user_id = ?");
     $cartQuery->bind_param("i", $user_id);
     $cartQuery->execute();
     $result = $cartQuery->get_result();
     $cart = $result->fetch_all(MYSQLI_ASSOC);
 
-    $order_date = date('Y-m-d'); // Gets the current date in YYYY-MM-DD format
-  
-    $total = 0;
-    $totalCost = 0;
-    $quantities = $_POST['quantity'] ?? [];
-    $validQuantities = true;
+    if (empty($cart)) {
+        echo json_encode(["success" => false, "message" => "Your cart is empty."]);
+        exit;
+    }
 
+    // Validate stock
     foreach ($cart as $item) {
-        $product_id = $item['product_id'];
-        $quantity = intval($quantities[$product_id] ?? $item['quantity']);
-        
-        if ($quantity <= 0) {
-            $validQuantities = false;
-            break;
+        if ($item['quantity'] > $item['stock']) {
+            echo json_encode(['success' => false, 'message' => 'Insufficient stock for some items.']);
+            exit;
         }
     }
-    
-    if (!$validQuantities) {
-        die(json_encode(['success' => false, 'message' => 'Invalid quantity for one or more items.']));
-    }
 
-    // Fetch the user's address if not provided
+    // Fetch user's address
     $address_id = $_POST['address_id'] ?? null;
 
     if (!$address_id) {
@@ -63,115 +52,115 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $addressQuery->bind_param("i", $user_id);
         $addressQuery->execute();
         $addressResult = $addressQuery->get_result();
-        
-        if ($addressResult->num_rows === 0) {
-            echo json_encode(['success' => false, 'message' => 'No delivery address found.']);
-            exit;
-        }
-        
-        $addressRow = $addressResult->fetch_assoc();
-        $address_id = $addressRow['address_id'] ?? null;
-        
-        if (!$address_id) {
+
+        if ($addressResult->num_rows > 0) {
+            $addressRow = $addressResult->fetch_assoc();
+            $address_id = intval($addressRow['address_id']);
+        } else {
             echo json_encode(['success' => false, 'message' => 'No delivery address found.']);
             exit;
         }
     }
 
-    
+    if (!$address_id) {
+        echo json_encode(['success' => false, 'message' => 'Address ID is missing.']);
+        exit;
+    }
+
+    // Get payment details
+    $paymentMethod = isset($_POST['paymentMethod']) ? trim($_POST['paymentMethod']) : 'cod';
+    if (empty($paymentMethod)) {
+        $paymentMethod = 'cod'; // Default to COD
+    }
+
+    $moneyReceived = isset($_POST['money']) ? floatval($_POST['money']) : $total;
+    $change = max(0, $moneyReceived - $total);
+    $paymentStatus = ($paymentMethod === 'gcash') ? 'paid' : 'unpaid';
+
+    // Start transaction
     $conn->begin_transaction();
 
-    
     try {
-        $status = "pending"; // Order status should be "pending"
-        
-        // Log status to error log for debugging
-        error_log("Order status: " . $status); // This will log the status to the PHP error log
-        
-        // Insert the order into the database
+        // ✅ Step 1: Insert order
+        $status = "pending";
         $ordersStmt = $conn->prepare("
-        INSERT INTO orders (user_id, order_date, product_id, quantity, total, status, address_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)");
-        
-        foreach ($cart as $item) {
-            $product_id = $item['product_id'];
-            $quantity = $item['quantity'];
-            $price = $item['price'];
-            $cost = $item['cost'];
-
-            $subtotal = $price * $quantity;
-            $totalCost += $cost * $quantity;
-            $total += $subtotal;
-
-            $ordersStmt->bind_param("issidss", $user_id, $order_date, $product_id, $quantity, $subtotal, $status, $address_id);
-            $ordersStmt->execute();
-            
-        }
-     
-        // Get the last inserted order_id
-        $order_id = $conn->insert_id;
-        if (!$order_id) {
-            error_log("Order insertion failed. Order ID is not available.");
-            die(json_encode(['success' => false, 'message' => 'Order placement failed: Order ID not found.']));
-        }
-        
-        // Payment handling
-        $paymentMethod = $_POST['paymentMethod'] ?? 'cod';
-        $moneyReceived = isset($_POST['money']) ? floatval($_POST['money']) : $total;
-        $change = max(0, $moneyReceived - $total);
-        $paymentStatus = ($paymentMethod === 'gcash') ? 'paid' : 'unpaid';
-
-        // Insert into transaction
-        $transactionStmt = $conn->prepare("
-            INSERT INTO transaction (order_id, payment_type, total_price)
-            VALUES (?, ?, ?)
-        ");
-        $transactionStmt->bind_param("isd", $order_id, $paymentMethod, $total);
-        $transactionStmt->execute();
-        $transaction_id = $conn->insert_id;
-
-        // Log payment transaction
-        $logStmt = $conn->prepare("
-            INSERT INTO payment_transaction_logs (order_id, transaction_id, amount, payment_method, status, details)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ");
-        $details = ($paymentMethod === 'gcash') ? "Payment completed via GCash" : "Payment pending for COD";
-        $logStmt->bind_param("iissss", $order_id, $transaction_id, $total, $paymentMethod, $paymentStatus, $details);
-        $logStmt->execute();
-
-        // Calculate profit and ROI
-        $profit = $total - $totalCost;
-        $roi = ($totalCost > 0) ? ($profit / $totalCost) * 100 : 0;
-
-        // Insert sales record
-        $salesStmt = $conn->prepare("
-            INSERT INTO sales (user_id, product_id, quantity, sale_amount, profit, roi, payment_method)
+            INSERT INTO orders (user_id, order_date, product_id, quantity, total, status, address_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
+    
+        $updateStockStmt = $conn->prepare("UPDATE product SET stock = stock - ? WHERE product_id = ?");
+        $logStockStmt = $conn->prepare("
+            INSERT INTO inventory_stock_logs (product_id, previous_stock, new_stock, adjustment_type, reason)
+            VALUES (?, ?, ?, 'deduction', ?)
+        ");
+    
         foreach ($cart as $item) {
             $product_id = $item['product_id'];
-            $quantity = $item['quantity'];
-            $subtotal = $item['price'] * $quantity;
-            $productCost = $item['cost'] * $quantity;
-            $productProfit = $subtotal - $productCost;
-            $productROI = ($productCost > 0) ? ($productProfit / $productCost) * 100 : 0;
-
-            $salesStmt->bind_param("iiiddds", $user_id, $product_id, $quantity, $subtotal, $productProfit, $productROI, $paymentMethod);
-            $salesStmt->execute();
+            $quantity = intval($item['quantity']);
+            $price = $item['price'];
+            $subtotal = $price * $quantity;
+            $total += $subtotal;
+    
+            $ordersStmt->bind_param("issidsi", $user_id, $order_date, $product_id, $quantity, $subtotal, $status, $address_id);
+    
+            if (!$ordersStmt->execute()) {
+                throw new Exception('Order insertion failed: ' . $ordersStmt->error);
+            }
+    
+            $order_id = $conn->insert_id; // ✅ Get the order_id
+    
+            // ✅ Step 2: Insert into `transaction` table
+            $insertTransactionStmt = $conn->prepare("
+                INSERT INTO transaction (order_id, payment_type, total_price)
+                VALUES (?, ?, ?)
+            ");
+    
+            $insertTransactionStmt->bind_param("isd", $order_id, $paymentMethod, $total);
+    
+            if (!$insertTransactionStmt->execute()) {
+                throw new Exception('Transaction insertion failed: ' . $insertTransactionStmt->error);
+            }
+    
+            $transaction_id = $conn->insert_id; // ✅ Get the transaction_id
+    
+            // ✅ Step 3: Insert into `payment_transaction_logs`
+            $insertPaymentLogStmt = $conn->prepare("
+                INSERT INTO payment_transaction_logs (order_id, transaction_id, amount, payment_method, status, details)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+    
+            $paymentStatus = ($paymentMethod === 'gcash') ? 'paid' : 'unpaid';
+            $details = "Payment for order #$order_id";
+            $insertPaymentLogStmt->bind_param("iidsss", $order_id, $transaction_id, $total, $paymentMethod, $paymentStatus, $details);
+    
+            if (!$insertPaymentLogStmt->execute()) {
+                throw new Exception('Payment log insertion failed: ' . $insertPaymentLogStmt->error);
+            }
+    
+            // ✅ Step 4: Reduce stock and log inventory change
+            $previousStock = $item['stock'];
+            $newStock = $previousStock - $quantity;
+            $reason = "Stock reduced due to order #$order_id by user #$user_id";
+    
+            $updateStockStmt->bind_param("ii", $quantity, $product_id);
+            $updateStockStmt->execute();
+    
+            $logStockStmt->bind_param("iiis", $product_id, $previousStock, $newStock, $reason);
+            $logStockStmt->execute();
         }
-
-        $conn->commit();
-
-        // Clear cart after successful order
+    
+        // ✅ Step 5: Clear user's cart
         $clearCartStmt = $conn->prepare("DELETE FROM cart WHERE user_id = ?");
         $clearCartStmt->bind_param("i", $user_id);
         $clearCartStmt->execute();
-
+    
+        $conn->commit();
+    
         echo json_encode(['success' => true, 'message' => 'Order placed successfully!', 'order_id' => $order_id]);
-
+    
     } catch (Exception $e) {
         $conn->rollback();
         echo json_encode(['success' => false, 'message' => 'Order placement failed: ' . $e->getMessage()]);
     }
-}
+    }
 ?>

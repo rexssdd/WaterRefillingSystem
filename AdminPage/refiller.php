@@ -4,9 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preparing Orders</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+     <link rel = "stylesheet" href = "https://unicons.iconscout.com/release/v4.0.0/css/line.css"/>
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                               <!-- Google Fonts -->
+   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-color: #f4f4f4;
             color: #333;
             margin: 0;
@@ -28,28 +35,13 @@
             text-align: center;
             margin-bottom: 20px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        th {
-            background-color: #0077cc;
-            color: #fff;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
+       
         button {
+            position: absolute;
+            bottom: 50px;
+            right: 400px;
             padding: 10px 15px;
-            background-color: #0077cc;
+            background-color:rgb(11, 72, 116);
             color: #fff;
             border: none;
             border-radius: 5px;
@@ -64,7 +56,8 @@
     <div class="container">
         <h1>Orders Currently Being Prepared</h1>
         <form id="updateOrdersForm">
-            <table>
+        <table class=" table table-dark table-striped table-hover">
+
                 <thead>
                     <tr>
                         <th>Select</th>
@@ -83,8 +76,14 @@
             <button type="submit">Mark as To Deliver</button>
         </form>
     </div>
+    <button class="logout-button" onclick="confirmLogout()">Logout</button>
 
-    <script>
+<script>
+    function confirmLogout() {
+        if (confirm('Are you sure you want to log out?')) {
+            window.location.href = '/php/logout.php';
+        }
+    }
         document.addEventListener('DOMContentLoaded', function() {
             fetch('fetch_reffiler.php')
                 .then(response => response.json())

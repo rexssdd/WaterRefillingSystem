@@ -35,17 +35,21 @@ if ($result->num_rows > 0) {
     // Update quantity
     $update_cart = $conn->prepare("UPDATE cart SET quantity = quantity + ? WHERE user_id = ? AND product_id = ?");
     $update_cart->bind_param("iii", $quantity, $user_id, $product_id);
-    $update_cart->execute();
+    $success = $update_cart->execute();
     $update_cart->close();
 } else {
     // Insert new item
     $insert_cart = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
     $insert_cart->bind_param("iii", $user_id, $product_id, $quantity);
-    $insert_cart->execute();
+    $success = $insert_cart->execute();
     $insert_cart->close();
 }
-    
-header("location: /user_dashboard/dashboard.php");
-echo json_encode(['success' => 'Item added to cart successfully!']);
+
+// Respond with JSON (No redirect)
+if ($success) {
+    echo json_encode(['success' => 'Item added to cart successfully!']);
+} else {
+    echo json_encode(['error' => 'Failed to add item to cart.']);
+}
 exit;
 ?>

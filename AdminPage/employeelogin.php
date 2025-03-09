@@ -7,12 +7,11 @@ if (!$conn) {
     die("<script>alert('Database connection failed.');</script>");
 }
 
-// Handle login
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
-    $username = trim(strtolower($_POST['username'])); // Case-insensitive
+    $username = trim(strtolower($_POST['username']));
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT admin_id, password FROM admin WHERE LOWER(username) = ?");
+    $stmt = $conn->prepare("SELECT personnel_id, password, position FROM employee_data WHERE LOWER(username) = ?");
     if (!$stmt) {
         die("<script>alert('SQL error.');</script>");
     }
@@ -22,27 +21,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
     $result = $stmt->get_result();
     
     if ($result->num_rows > 0) {
-        $admin = $result->fetch_assoc();
-        
-        // Debugging: Check fetched data
-        // var_dump($admin); exit();
+        $employee = $result->fetch_assoc();
 
-        // Check if password is hashed
-        if (password_verify($password, $admin['password'])) { 
-            $_SESSION['admin_logged_in'] = true;
-            $_SESSION['admin_id'] = $admin['admin_id'];
-            header("Location: adminproducts.php");
-            exit();
-        } elseif ($password === $admin['password']) { // For plain text passwords
-            $_SESSION['admin_logged_in'] = true;
-            $_SESSION['admin_id'] = $admin['admin_id'];
-            header("Location: adminproducts.php");
-            exit();
+        // Verify password
+        if (password_verify($password, $employee['password'])) {
+            $_SESSION['personnel_id'] = $employee['personnel_id'];
+            $_SESSION['position'] = $employee['position'];
+
+            if (strtolower($employee['position']) == 'refiller') {
+                header("Location: refillerpage.php");
+                exit();
+            } elseif (strtolower($employee['position']) == 'delivery') {
+                header("Location: deliverypage.php");
+                exit();
+            } else {
+                echo "<script>alert('Invalid position.'); window.location.href='login.php';</script>";
+            }
         } else {
-            echo "<script>alert('Invalid password.'); window.location.href='adminlogin.php';</script>";
+            echo "<script>alert('Invalid password.'); window.location.href='login.php';</script>";
         }
     } else {
-        echo "<script>alert('User not found.'); window.location.href='adminlogin.php';</script>";
+        echo "<script>alert('User not found.'); window.location.href='login.php';</script>";
     }
 
     $stmt->close();
@@ -50,15 +49,60 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
 
 $conn->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JZ Waters Admin Login</title>
+    <title>Employee Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css"/>
     <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: url("/images/bg-3.jpg") no-repeat center center/cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+            width: 350px;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .input-box {
+            margin-bottom: 20px;
+        }
+        .input-box input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -180,19 +224,23 @@ button:hover {
             cursor: pointer;
             color:rgb(3, 3, 3);
         }
-       
     </style>
+        <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css"/>
+                               <!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  
 </head>
 <body>
 
-    <section class="container1">
+<section class="container1">
         <img src="/images/Jz.png" alt="JZ Waters Logo" class="about-logo">
 
         <div class="divider"></div>
 
         <div class="login-section">
             <div class="container">
-                <h2 style="align-self:center;">Admin Login</h2>
+                <h2 style="align-self:center;">Employee Login</h2>
                 <form method="POST">
                     <div class="input-box">
                         <input type="text" name="username" placeholder="Username" required>
@@ -204,9 +252,9 @@ button:hover {
                     </div>
                     <button type="submit" name="login">Login</button>
                     <h3 style="align-self:center;">
-                <a href="employeelogin.php" style="text-decoration: none; color: inherit;">Login as Employee</a>
+                <a href="adminlogin.php" style="text-decoration: none; color: inherit;">Login as Admin</a>
             </h3>
-                        </form>
+         </form>
             </div>
         </div>
     </section>

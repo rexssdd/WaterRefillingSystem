@@ -56,7 +56,9 @@ try {
     $new_total = number_format($new_quantity * $price, 2);
 
     $conn->commit();
-    echo json_encode(["status" => "success", "new_total" => $new_total]);
+    
+    // Send success response
+    echo json_encode(["status" => "success", "new_total" => $new_total, "redirect" => "/USER_DASHBOARD/cart.php"]);
 
 } catch (Exception $e) {
     $conn->rollback();
@@ -64,4 +66,5 @@ try {
 }
 
 exit();
+
 ?>
